@@ -7,13 +7,14 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
+
 import CheckBox from '@react-native-community/checkbox';
 
 const MyCart = () => {
   const [items, setItems] = useState([
     {
       id: 1,
-      image: require('./img/nikee.jpg'),
+      image: require('../img/nike_2.jpg'),
       title: 'Nike Club Max',
       price: 64.95,
       size: 'L',
@@ -22,7 +23,7 @@ const MyCart = () => {
     },
     {
       id: 2,
-      image: require('./img/nike_2.jpg'),
+      image: require('../img/nike_3.jpg'),
       title: 'Nike Air Max 200',
       price: 64.95,
       size: 'XL',
@@ -31,7 +32,7 @@ const MyCart = () => {
     },
     {
       id: 3,
-      image: require('./img/nike_3.jpg'),
+      image: require('../img/nikee.jpg'),
       title: 'Nike Air Max',
       price: 64.95,
       size: 'XXL',
