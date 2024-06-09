@@ -5,52 +5,45 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import React, {useState} from 'react';
+} from "react-native";
+import React, { useState } from "react";
 import {colors} from '../constains/colors';
-import {fontsize} from '../constains/fontsize';
 
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-import {useNavigation} from '@react-navigation/native';
 
-const Login = () => {
+import Ionicons from "react-native-vector-icons/Ionicons";
+ import SimpleLineIcons from "react-native-vector-icons/SimpleLineIcons";
+import { useNavigation } from "@react-navigation/native";
+import { fontsize } from "../constains/fontsize";
+
+const Signup = () => {
   const navigation = useNavigation();
   const [secureEntery, setSecureEntery] = useState(true);
 
   const handleGoBack = () => {
     navigation.goBack();
   };
-  const handleSignup = () => {
-    navigation.navigate('SIGNUP');
-  };
 
-  const handlePassW = () => {
-    navigation.navigate('');
+  const handleLogin = () => {
+    navigation.navigate("LOGIN");
   };
-  const handleProF =() =>{
-    navigation.navigate('PROFILE')
-  }
 
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backButtonWrapper} onPress={handleGoBack}>
         <Ionicons
-          name={'arrow-back-outline'}
+          name={"arrow-back-outline"}
           color={colors.primary}
           size={25}
         />
       </TouchableOpacity>
       <View style={styles.textContainer}>
-        <Text style={styles.headingText}>Hello Again!</Text>
-        <Text style={styles.headingText2}>
-          Welcome Back You’ve Been Missed!
-        </Text>
+        <Text style={styles.headingText}>Create Account</Text>
+        <Text style={styles.headingText1}>Please Enter Your Email Address To Recieve a Verification Code</Text>
       </View>
       {/* form  */}
       <View style={styles.formContainer}>
         <View style={styles.inputContainer}>
-          <Ionicons name={'mail-outline'} size={30} color={colors.secondary} />
+          <Ionicons name={"mail-outline"} size={30} color={colors.secondary} />
           <TextInput
             style={styles.textInput}
             placeholder="Enter your email"
@@ -59,7 +52,7 @@ const Login = () => {
           />
         </View>
         <View style={styles.inputContainer}>
-          <SimpleLineIcons name={'lock'} size={30} color={colors.secondary} />
+          <SimpleLineIcons name={"lock"} size={30} color={colors.secondary} />
           <TextInput
             style={styles.textInput}
             placeholder="Enter your password"
@@ -68,29 +61,42 @@ const Login = () => {
           />
           <TouchableOpacity
             onPress={() => {
-              setSecureEntery(prev => !prev);
-            }}>
-            <SimpleLineIcons name={'eye'} size={20} color={colors.secondary} />
+              setSecureEntery((prev) => !prev);
+            }}
+          >
+            <SimpleLineIcons name={"eye"} size={20} color={colors.secondary} />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={handlePassW}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleProF} style={styles.loginButtonWrapper}>
-          <Text style={styles.loginText}>Singup</Text>
+        <View style={styles.inputContainer}>
+          <SimpleLineIcons
+            name={"screen-smartphone"}
+            size={30}
+            color={colors.secondary}
+          />
+          <TextInput
+            style={styles.textInput}
+            placeholder="Enter your phone no"
+            placeholderTextColor={colors.secondary}
+            secureTextEntry={secureEntery}
+            keyboardType="phone-pad"
+          />
+        </View>
+
+        <TouchableOpacity style={styles.loginButtonWrapper}>
+          <Text style={styles.loginText}>Sign up</Text>
         </TouchableOpacity>
         <Text style={styles.continueText}>or continue with</Text>
         <TouchableOpacity style={styles.googleButtonContainer}>
           <Image
-            source={require('../img/google.png')}
+            source={require("../images/google.png")}
             style={styles.googleImage}
           />
-          <Text style={styles.googleText}> Sign in with google</Text>
+          <Text style={styles.googleText}>Google</Text>
         </TouchableOpacity>
         <View style={styles.footerContainer}>
-          <Text style={styles.accountText}>Don’t have an account?</Text>
-          <TouchableOpacity onPress={handleSignup}>
-            <Text style={styles.signupText}>Sign up</Text>
+          <Text style={styles.accountText}>Already have an account!</Text>
+          <TouchableOpacity onPress={handleLogin}>
+            <Text style={styles.signupText}>Login</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -98,7 +104,7 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;
 
 const styles = StyleSheet.create({
   container: {
@@ -111,35 +117,30 @@ const styles = StyleSheet.create({
     width: 40,
     backgroundColor: colors.gray,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   textContainer: {
-    marginTop: 80,
+    marginTop:60,
     // Để view chứa văn bản có kích thước linh hoạt
     justifyContent: 'center', // Căn giữa theo chiều ngang
     alignItems: 'center', // Căn giữa theo chiều dọc
-    // marginTop: 20, // Để tạo khoảng cách với phần trên
   },
   headingText: {
     fontSize: 32,
     color: colors.primary,
     fontFamily: fontsize.SemiBold,
   },
-  headingText2: {
+  formContainer: {
     marginTop: 20,
-    fontSize: 18,
-    // color: colors.primary,
-    // fontFamily: fonts.Regular,
-    marginTop: 10, // Để tạo khoảng cách giữa hai dòng văn bản
   },
   inputContainer: {
     borderWidth: 1,
     borderColor: colors.secondary,
     borderRadius: 100,
     paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 2,
     marginVertical: 10,
   },
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
     fontFamily: fontsize.Light,
   },
   forgotPasswordText: {
-    textAlign: 'right',
+    textAlign: "right",
     color: colors.primary,
     fontFamily: fontsize.SemiBold,
     marginVertical: 10,
@@ -163,23 +164,23 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 20,
     fontFamily: fontsize.SemiBold,
-    textAlign: 'center',
+    textAlign: "center",
     padding: 10,
   },
   continueText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginVertical: 20,
     fontSize: 14,
     fontFamily: fontsize.Regular,
     color: colors.primary,
   },
   googleButtonContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderWidth: 2,
     borderColor: colors.primary,
     borderRadius: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 10,
     gap: 10,
   },
@@ -192,9 +193,9 @@ const styles = StyleSheet.create({
     fontFamily: fontsize.SemiBold,
   },
   footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginVertical: 20,
     gap: 5,
   },
@@ -204,6 +205,6 @@ const styles = StyleSheet.create({
   },
   signupText: {
     color: colors.primary,
-    fontFamily: fontsize.SemiBold,
+    fontFamily: fontsize.Bold,
   },
 });

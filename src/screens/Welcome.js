@@ -26,15 +26,15 @@ const Welcome = () => {
         dotStyle={styles.dot}
         activeDotStyle={styles.activeDot}>
         <View style={styles.slide}>
-          <Image source={require('../img/1.png')} style={styles.logo} />
+          <Image source={require('../images/1.png')} style={styles.logo} />
           <Text style={styles.overlayText}>NIKE</Text>
         </View>
         <View style={styles.slide}>
-          <Image source={require('../img/2.png')} style={styles.logo} />
+          <Image source={require('../images/2.png')} style={styles.logo} />
           <Text style={styles.overlayText}>NIKE</Text>
         </View>
         <View style={styles.slide}>
-          <Image source={require('../img/3.png')} style={styles.logo} />
+          <Image source={require('../images/3.png')} style={styles.logo} />
           <Text style={styles.overlayText}>NIKE</Text>
           <View style={styles.buttonContainer}>
             <Button title="Get Started" onPress={handleLogin} />

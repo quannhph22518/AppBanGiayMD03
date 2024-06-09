@@ -109,7 +109,7 @@ const Checkout = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Image
-              source={require('../img/thanhcong.jpg')}
+              source={require('../images/thanhcong.jpg')}
               style={styles.modalImage}
             />
             <Text style={styles.modalMessage}>Your Payment Is Successful</Text>

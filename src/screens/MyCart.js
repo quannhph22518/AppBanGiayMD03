@@ -14,7 +14,7 @@ const MyCart = () => {
   const [items, setItems] = useState([
     {
       id: 1,
-      image: require('../img/nike_2.jpg'),
+      image: require('../images/nike_2.jpg'),
       title: 'Nike Club Max',
       price: 64.95,
       size: 'L',
@@ -23,7 +23,7 @@ const MyCart = () => {
     },
     {
       id: 2,
-      image: require('../img/nike_3.jpg'),
+      image: require('../images/nike_3.jpg'),
       title: 'Nike Air Max 200',
       price: 64.95,
       size: 'XL',
@@ -32,7 +32,7 @@ const MyCart = () => {
     },
     {
       id: 3,
-      image: require('../img/nikee.jpg'),
+      image: require('../images/nikee.jpg'),
       title: 'Nike Air Max',
       price: 64.95,
       size: 'XXL',

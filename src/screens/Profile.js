@@ -39,7 +39,7 @@ const Profile = () => {
         <Text style={styles.headingText}>Profile</Text>
       </View>
       <View style={styles.profile}>
-        <Image source={require('../img/4.jpg')} style={styles.profileAvatar} />
+        <Image source={require('../images/4.jpg')} style={styles.profileAvatar} />
         {/* <Text style={styles.profileName}>John Doe</Text> */}
 
         <TouchableOpacity onPress={handleEditProfile}>
