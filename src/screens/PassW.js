@@ -5,24 +5,46 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from 'react-native';
 import React, {useState} from 'react';
 import {colors} from '../constains/colors';
 import {fontsize} from '../constains/fontsize';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
-//   import SimpleLineIcons from "react-native-vector-icons/SimpleLineIcons";
 import {useNavigation} from '@react-navigation/native';
 
 const Login = () => {
   const navigation = useNavigation();
-  const [secureEntery, setSecureEntery] = useState(true);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   const handleGoBack = () => {
     navigation.goBack();
   };
   const handleSignup = () => {
     navigation.navigate('SIGNUP');
+  };
+
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const handleContinue = () => {
+    if (!email) {
+      setEmailError('Email không được để trống');
+      return;
+    } else if (!validateEmail(email)) {
+      setEmailError('Email không hợp lệ');
+      return;
+    } else {
+      setEmailError('');
+      // Thực hiện tiếp tục xử lý tại đây
+      Alert.alert('Success', 'Mã xác minh đã được gửi tới email của bạn');
+      // Optionally navigate to another screen
+      // navigation.navigate('NEXT_SCREEN');
+    }
   };
 
   return (
@@ -35,58 +57,28 @@ const Login = () => {
         />
       </TouchableOpacity>
       <View style={styles.textContainer}>
-        <Text style={styles.headingText}>Recovery Password</Text>
+        <Text style={styles.headingText}>Khôi phục mật khẩu</Text>
         <Text style={styles.headingText2}>
-          Please Enter Your Email Address To Recieve a Verification Code
+        Vui lòng nhập địa chỉ email của bạn để nhận mã xác minh
         </Text>
       </View>
       {/* form  */}
       <View style={styles.formContainer}>
-        <View style={styles.inputContainer}>
-          <Ionicons name={'mail-outline'} size={30} color={colors.secondary} />
+        <View style={[styles.inputContainer, emailError ? styles.inputError : null]}>
+          <Ionicons name={'mail-outline'} size={30} color={emailError ? 'red' : colors.secondary} />
           <TextInput
             style={styles.textInput}
-            placeholder="Enter your email"
-            placeholderTextColor={colors.secondary}
+            placeholder="Nhập Email"
+            placeholderTextColor={emailError ? 'red' : colors.secondary}
             keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
         </View>
-        {/* <View style={styles.inputContainer}>
-            <SimpleLineIcons name={"lock"} size={30} color={colors.secondary} />
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter your password"
-              placeholderTextColor={colors.secondary}
-              secureTextEntry={secureEntery}
-            />
-            <TouchableOpacity
-              onPress={() => {
-                setSecureEntery((prev) => !prev);
-              }}
-            >
-              <SimpleLineIcons name={"eye"} size={20} color={colors.secondary} />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity> */}
-        <TouchableOpacity style={styles.loginButtonWrapper}>
-          <Text style={styles.loginText}>Continue</Text>
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+        <TouchableOpacity style={styles.loginButtonWrapper} onPress={handleContinue}>
+          <Text style={styles.loginText}>Tiếp Tục </Text>
         </TouchableOpacity>
-        {/* <Text style={styles.continueText}>or continue with</Text> */}
-        {/* <TouchableOpacity style={styles.googleButtonContainer}>
-            <Image
-              source={require("../img/google.png")}
-              style={styles.googleImage}
-            />
-            <Text style={styles.googleText}> Sign in with google</Text>
-          </TouchableOpacity>
-          <View style={styles.footerContainer}>
-            <Text style={styles.accountText}>Don’t have an account?</Text>
-            <TouchableOpacity onPress={handleSignup}>
-              <Text style={styles.signupText}>Sign up</Text>
-            </TouchableOpacity>
-          </View> */}
       </View>
     </View>
   );
@@ -110,10 +102,8 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     marginTop: 80,
-    // Để view chứa văn bản có kích thước linh hoạt
-    justifyContent: 'center', // Căn giữa theo chiều ngang
-    alignItems: 'center', // Căn giữa theo chiều dọc
-    // marginTop: 20, // Để tạo khoảng cách với phần trên
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headingText: {
     fontSize: 32,
@@ -123,9 +113,8 @@ const styles = StyleSheet.create({
   headingText2: {
     marginTop: 20,
     fontSize: 18,
-    // color: colors.primary,
-    // fontFamily: fonts.Regular,
-    marginTop: 10, // Để tạo khoảng cách giữa hai dòng văn bản
+    marginTop: 10,
+    textAlign: 'center', // Thêm thuộc tính này để căn giữa văn bản
   },
   inputContainer: {
     borderWidth: 1,
@@ -137,16 +126,20 @@ const styles = StyleSheet.create({
     padding: 2,
     marginVertical: 10,
   },
+  inputError: {
+    borderColor: 'red',
+  },
   textInput: {
     flex: 1,
     paddingHorizontal: 10,
     fontFamily: fontsize.Light,
   },
-  forgotPasswordText: {
-    textAlign: 'right',
-    color: colors.primary,
-    fontFamily: fontsize.SemiBold,
-    marginVertical: 10,
+  errorText: {
+    color: 'red',
+    fontSize: 14,
+    marginTop: 5,
+    marginBottom: 10,
+    paddingHorizontal: 20,
   },
   loginButtonWrapper: {
     backgroundColor: colors.primary,
@@ -160,44 +153,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: 10,
   },
-  continueText: {
-    textAlign: 'center',
-    marginVertical: 20,
-    fontSize: 14,
-    fontFamily: fontsize.Regular,
-    color: colors.primary,
-  },
-  // googleButtonContainer: {
-  //   flexDirection: "row",
-  //   borderWidth: 2,
-  //   borderColor: colors.primary,
-  //   borderRadius: 100,
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  //   padding: 10,
-  //   gap: 10,
-  // },
-  // googleImage: {
-  //   height: 20,
-  //   width: 20,
-  // },
-  // googleText: {
-  //   fontSize: 20,
-  //   fontFamily: fonts.SemiBold,
-  // },
-  // footerContainer: {
-  //   flexDirection: "row",
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  //   marginVertical: 20,
-  //   gap: 5,
-  // },
-  // accountText: {
-  //   color: colors.primary,
-  //   fontFamily: fonts.Regular,
-  // },
-  // signupText: {
-  //   color: colors.primary,
-  //   fontFamily: fonts.SemiBold,
-  // },
 });

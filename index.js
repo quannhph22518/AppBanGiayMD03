@@ -18,6 +18,7 @@ import Login from './src/screens/Login';
 
 // welcome, login... 1 phần màn hình đang tạm tời gộp chung bên App
 import App from './App';
+import Signup from './src/screens/Signup';
 
 AppRegistry.registerComponent(appName, () => App);
 
