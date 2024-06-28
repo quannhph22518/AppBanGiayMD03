@@ -20,7 +20,7 @@ import Login from './src/screens/Login';
 import App from './App';
 import Signup from './src/screens/Signup';
 
-AppRegistry.registerComponent(appName, () => App);
+AppRegistry.registerComponent(appName, () => AppNavigation);
 
 
 

@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-const Search = () => {
+const Search = ({navigation}) => {
   const [query, setQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState([
     'Nike Air Max Shoes',
@@ -31,7 +31,9 @@ const Search = () => {
     setQuery('');
   };
 
-  const handleBack = () => {};
+  const handleBack = () => {
+    navigation.goBack()
+  };
 
   const handleCancel = () => {};
 

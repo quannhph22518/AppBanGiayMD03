@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,156 +7,173 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import React, {useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import axios from 'axios';
 import GradientButton from '../components/gradientButton';
 import SearchBar from '../components/SearchBar';
 import ProductCardPopular from '../components/ProductCardPopular';
 import ProductCardArrival from '../components/ProductCardArrival';
 
-const categories = [
-  {
-    name: 'Nike',
-    image: require('../images/nike.png'),
-  },
-  {
-    name: 'Puma',
-    image: require('../images/puma.png'),
-  },
-  {
-    name: 'Adidas',
-    image: require('../images/adidas.png'),
-  },
-  {
-    name: 'Converse',
-    image: require('../images/conserve.png'),
-  },
-];
+const Home = ({navigation}) => {
+  const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState('');
+  const [popularProducts, setPopularProducts] = useState([]);
+  const [newArrivalProducts, setNewArrivalProducts] = useState([]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get('http://192.168.0.149:5000/api/brand/');
+        const formattedCategories = response.data.map(cat => ({
+          name: cat.title,
+          image: { uri: cat.image },
+        }));
+        setCategories(formattedCategories);
+        setActiveCategory(formattedCategories[0]?.name || '');
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
 
+    fetchCategories();
+  }, []);
 
-const products = [
-  {
-    name: 'Nike Jordan',
-    image: require('../images/shoered.png'), // Đảm bảo đường dẫn đúng
-    price: 493.0,
-  },
-  {
-    name: 'Nike Air Max',
-    image: require('../images/shoeblue.png'), // Đảm bảo đường dẫn đúng
-    price: 897.99,
-  },
-];
+  useEffect(() => {
+    if (activeCategory) {
+      const fetchProducts = async () => {
+        try {
+          const [popularResponse, newArrivalResponse] = await Promise.all([
+            axios.get(`http://192.168.0.149:5000/api/product/tag/${activeCategory}/popular`),
+            axios.get(`http://192.168.0.149:5000/api/product/tag/${activeCategory}/new-arrivals`),
+          ]);
 
-const Home = () => {
-  const [activeCategory, setActiveCategory] = useState('Nike');
+          const formatProducts = (products) =>
+            products.map(product => ({
+              id: product._id,
+              title: product.title,
+              image: { uri: product.images[0]?.url || '' },
+              price: product.price,
+            }));
+
+          setPopularProducts(formatProducts(popularResponse.data).slice(0, 2));
+          setNewArrivalProducts(formatProducts(newArrivalResponse.data).slice(0, 2));
+        } catch (error) {
+          console.error('Error fetching products:', error);
+        }
+      };
+
+      fetchProducts();
+    }
+  }, [activeCategory]);
 
   const handleSeeAll = () => {
-    // Logic cho nút See All, có thể là điều hướng đến màn hình khác
     console.log('See all pressed');
   };
 
+  const handleSearch = () =>{
+   navigation.navigate('Search')
+  }
+
+  const handleNotification = () =>{
+    navigation.navigate('Notifications')
+  }
+
   return (
     <ScrollView>
-<View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="grid-outline" size={24} color="black" />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.iconContainer}>
+            <Ionicons name="grid-outline" size={24} color="black" />
+          </View>
+          <View style={styles.locationContainer}>
+            <Text style={styles.storeLocationText}>Store location</Text>
+            <View style={styles.location}>
+              <Ionicons name="location-sharp" size={16} color="red" />
+              <Text style={styles.locationText}>Mondolibug, Sylhet</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.iconContainer} onPress={handleNotification}>
+            <Ionicons name="notifications-outline" size={24} color="black" />
+            <View style={styles.notificationDot} />
+          </TouchableOpacity>
         </View>
-        <View style={styles.locationContainer}>
-          <Text style={styles.storeLocationText}>Store location</Text>
-          <View style={styles.location}>
-            <Ionicons name="location-sharp" size={16} color="red" />
-            <Text style={styles.locationText}>Mondolibug, Sylhet</Text>
+
+        {/* search */}
+        <SearchBar onPress={handleSearch}/>
+
+        {/* categories */}
+        <View style={styles.categoryContainer}>
+          <View style={styles.scrollContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {categories.map(cat => {
+                if (cat.name === activeCategory) {
+                  return (
+                    <GradientButton
+                      key={cat.name}
+                      containerStyle={styles.buttonContainer}
+                      value={cat.name}
+                      image={cat.image}
+                      onPress={() => setActiveCategory(cat.name)}>
+                      <Image source={cat.image} style={styles.image} />
+                      <Text style={styles.text}>{cat.name}</Text>
+                    </GradientButton>
+                  );
+                } else {
+                  return (
+                    <TouchableOpacity
+                      onPress={() => setActiveCategory(cat.name)}
+                      key={cat.name}
+                      style={styles.normalButton}>
+                      <Image source={cat.image} style={styles.image} />
+                    </TouchableOpacity>
+                  );
+                }
+              })}
+            </ScrollView>
           </View>
         </View>
-        <View style={styles.iconContainer}>
-          <Ionicons name="cart-outline" size={24} color="black" />
-          <View style={styles.notificationDot} />
+
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>Popular Shoes</Text>
+          <TouchableOpacity onPress={handleSeeAll}>
+            <Text style={styles.seeAll}>See all</Text>
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* search */}
-      <SearchBar />
-
-      {/* categories */}
-      <View style={styles.categoryContainer}>
-        <View style={styles.scrollContainer}>
+        {/* Product Cards Popular */}
+        <View style={{ marginLeft: 25, marginTop: 10 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {categories.map(cat => {
-              if (cat.name === activeCategory) {
-                return (
-                  <GradientButton
-                    key={cat.name}
-                    containerStyle={styles.buttonContainer}
-                    value={cat.name}
-                    image={cat.image}
-                    onPress={() => setActiveCategory(cat.name)}>
-                    <Image source={cat.image} style={styles.image} />
-                    <Text style={styles.text}>{cat.name}</Text>
-                  </GradientButton>
-                );
-              } else {
-                return (
-                  <TouchableOpacity
-                    onPress={() => setActiveCategory(cat.name)}
-                    key={cat.name}
-                    style={styles.normalButton}>
-                    <Image source={cat.image} style={styles.image} />
-                  </TouchableOpacity>
-                );
-              }
-            })}
+            {popularProducts.map((product, index) => (
+              <ProductCardPopular key={index} product={product} />
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>New Arrivals</Text>
+          <TouchableOpacity onPress={handleSeeAll}>
+            <Text style={styles.seeAll}>See all</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Product Cards Arrival */}
+        <View style={{ marginLeft: 25, marginTop: 10, marginBottom: 20 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {newArrivalProducts.map((product, index) => (
+              <ProductCardArrival key={index} product={product} />
+            ))}
           </ScrollView>
         </View>
       </View>
-
-      
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>Popular Shoes</Text>
-        <TouchableOpacity onPress={handleSeeAll}>
-          <Text style={styles.seeAll}>See all</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Product Cards Popular*/}
-      <View style={{marginLeft: 10, marginTop: 10}}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {products.map((product, index) => (
-            <ProductCardPopular key={index} product={product} />
-          ))}
-        </ScrollView>
-      </View>
-
-   
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>New Arrivals</Text>
-        <TouchableOpacity onPress={handleSeeAll}>
-          <Text style={styles.seeAll}>See all</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Product Cards Arrival*/}
-      <View style={{marginLeft: 10, marginTop: 10}}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {products.map((product, index) => (
-            <ProductCardArrival key={index} product={product} />
-          ))}
-        </ScrollView>
-      </View>
-    </View>
     </ScrollView>
-    
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
     backgroundColor: '#F8F9FA',
-    marginHorizontal: 10,
-    marginBottom: 20
+    marginBottom: 20,
   },
   header: {
     flexDirection: 'row',
@@ -174,7 +192,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#ffffff',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 5,
@@ -220,12 +238,15 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginRight: 8,
     alignItems: 'center',
+    backgroundColor: '#007BFF',
+    padding: 3,
+    borderRadius: 50,
   },
   normalButton: {
     backgroundColor: '#FFFFFF',
     padding: 10,
     borderRadius: 50,
-    marginRight: 14,
+    marginRight: 18,
     alignItems: 'center',
   },
   image: {
@@ -236,13 +257,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  normalText: {
+    color: 'black',
+    fontWeight: 'bold',
+  },
   headerContainer: {
     marginTop: 25,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-
     marginVertical: 10,
   },
   seeAll: {

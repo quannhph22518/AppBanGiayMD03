@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
+  ToastAndroid,
 } from 'react-native';
 import React, {useState} from 'react';
 import {colors} from '../constains/colors';
@@ -49,9 +49,9 @@ const Login = () => {
     return regex.test(password);
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     let valid = true;
-
+  
     if (!email) {
       setEmailError('Email không được để trống');
       valid = false;
@@ -61,7 +61,7 @@ const Login = () => {
     } else {
       setEmailError('');
     }
-
+  
     if (!password) {
       setPasswordError('Mật khẩu không được để trống');
       valid = false;
@@ -71,15 +71,38 @@ const Login = () => {
     } else {
       setPasswordError('');
     }
-
+  
     if (!valid) {
       return;
     }
-
+  
     // Thực hiện đăng nhập ở đây
-    Alert.alert('Success', 'Đăng nhập thành công');
-    handleProF();
+    try {
+      const response = await fetch('http://192.168.0.149:5000/api/user/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      const data = await response.json();
+      console.log('Success:', data);
+      ToastAndroid.show('Đăng nhập thành công', ToastAndroid.SHORT);
+      handleProF();
+    } catch (error) {
+      console.error('Error:', error);
+      ToastAndroid.show('Đăng nhập thất bại', ToastAndroid.SHORT);
+    }
   };
+  
 
   return (
     <View style={styles.container}>
@@ -232,7 +255,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     fontSize: 14,
     fontFamily: fontsize.Regular,
-    color: colors.primary,
+    color: colors.secondary,
   },
   googleButtonContainer: {
     flexDirection: 'row',
@@ -260,7 +283,8 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   accountText: {
-    color: colors.primary,
+    marginRight: 10,
+    color: colors.secondary,
     fontFamily: fontsize.Regular,
   },
   signupText: {
