@@ -36,7 +36,7 @@ const Signup = () => {
   };
 
   const handleLogin = () => {
-    navigation.navigate("LOGIN");
+    navigation.navigate("Login");
   };
 
   const validateEmail = (email) => {

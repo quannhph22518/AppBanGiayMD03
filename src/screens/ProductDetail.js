@@ -37,7 +37,7 @@ const ProductDetail = ({ navigation, route }) => {
   const handleFavoute = async () => {
     const token = await AsyncStorage.getItem('token');
     if (token === null) {
-      navigation.navigate('Login');
+      navigation.navigate('User');
     } else {
       // Thêm logic để xử lý khi người dùng đã đăng nhập và nhấn nút Favourite
     }

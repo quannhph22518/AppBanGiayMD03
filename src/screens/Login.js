@@ -32,7 +32,7 @@ const Login = () => {
   };
 
   const handlePassW = () => {
-    navigation.navigate('Register');
+    navigation.navigate('ForgotPass');
   };
 
   const handleProF = () => {

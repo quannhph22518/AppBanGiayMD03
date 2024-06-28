@@ -29,7 +29,7 @@ const ProductAll = ({ navigation, route }) => {
   const renderProduct = ({ item }) => (
     <TouchableOpacity
       style={styles.productCard}
-      onPress={() => navigation.navigate('ProductDetail', { productId: item.id })}
+      onPress={() => navigation.navigate('ProductDetail', { id: item.id })}
     >
       <Image source={item.image} style={styles.productImage} />
       <Text style={[styles.bestSeller, { textTransform: 'uppercase' }]}>{titleProduct}</Text>
