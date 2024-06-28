@@ -1,63 +1,103 @@
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Swiper from 'react-native-swiper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import StarRating from 'react-native-star-rating-widget';
 
-const ProductDetail = ({ navigation }) => {
+const ProductDetail = ({ navigation, route }) => {
+  const { id } = route.params;
+  const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [formattedPrice, setFormattedPrice] = useState("0 VND");
 
-  const sizes = [38, 39, 40, 41, 42, 43];
-
-  const images = [
-    require('../images/anike.png'),
-    require('../images/bnike.png'),
-    require('../images/cnike.png'),
-    require('../images/dnike.png'),
-    
-  ];
+  useEffect(() => {
+    axios.get(`http://192.168.0.149:5000/api/product/${id}`)
+      .then(response => {
+        setProduct(response.data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error(error);
+        setLoading(false);
+      });
+  }, [id]);
 
   const handleSizePress = (size) => {
     setSelectedSize(size);
+    setFormattedPrice(formatPrice(product.price) + " VND");
   };
+
+  const formatPrice = (price) => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const handleFavoute = async () => {
+    const token = await AsyncStorage.getItem('token');
+    if (token === null) {
+      navigation.navigate('User');
+    } else {
+      // Thêm logic để xử lý khi người dùng đã đăng nhập và nhấn nút Favourite
+    }
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  if (!product) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text>Unable to fetch product details</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator = {false}>
-        {/* Header */}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.headerContainer}>
-          <TouchableOpacity  style={styles.iconContainer}>
+          <TouchableOpacity style={styles.iconContainer} onPress={() => { navigation.goBack() }}>
             <Ionicons name="chevron-back-outline" size={24} color="black" />
           </TouchableOpacity>
-          <Text style={styles.title}>Men's Shoes</Text>
-          <TouchableOpacity onPress={() => console.log('Cart pressed')} style={styles.iconContainer}>
-            <Ionicons name="cart-outline" size={24} color="black" />
+          <Text style={styles.title}>Product Details</Text>
+          <TouchableOpacity onPress={handleFavoute} style={styles.iconContainer}>
+            <Ionicons name="heart-outline" size={24} color="black" />
           </TouchableOpacity>
         </View>
 
-        {/* Product Image */}
         <View style={styles.productImageContainer}>
-          <Image source={require('../images/shoeblu1.png')} style={styles.productImage} />
-          <Image source={require('../images/arrow.png')} style={{ position: 'absolute', bottom: -25 }} />
+          <Swiper
+            showsButtons={false}
+            autoplay={true}
+            loop={true}
+            duration={2000}
+            style={styles.swiper}
+          >
+            {product.images.map((image, index) => (
+              <View key={index} style={styles.slide}>
+                <Image source={{ uri: image.url }} style={styles.productImage} />
+              </View>
+            ))}
+          </Swiper>
         </View>
 
-        {/* Product Info */}
         <View style={styles.productInfoContainer}>
-          <Text style={styles.bestSeller}>BEST SELLER</Text>
-          <Text style={styles.productName}>Nike Air Jordan</Text>
-          <Text style={styles.productPrice}>$967.800</Text>
-          <Text style={styles.productDescription}>
-            Air Jordan is an American brand of basketball shoes athletic, casual, and style clothing produced by Nike...
-          </Text>
-          <Text style={styles.sectionTitle}>Gallery</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galleryContainer}>
-            <Image source={require('../images/shoeblue.png')} style={styles.galleryImage} />
-            <Image source={require('../images/shoered.png')} style={styles.galleryImage} />
-            <Image source={require('../images/shoeblue.png')} style={styles.galleryImage} />
-          </ScrollView>
+          <Text style={styles.bestSeller}>{product.tags.toUpperCase()}</Text>
+          <Text style={styles.productName}>{product.title}</Text>
+          <Text style={styles.productPrice}>{formatPrice(product.price)} VND</Text>
+          <Text style={styles.productDescription}>{product.description}</Text>
 
           <Text style={styles.sectionTitle}>Size</Text>
           <View style={styles.sizeContainer}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {sizes.map((size) => (
+              {product.size.map((size) => (
                 <TouchableOpacity
                   key={size}
                   style={[
@@ -78,12 +118,39 @@ const ProductDetail = ({ navigation }) => {
               ))}
             </ScrollView>
           </View>
+
+          <View style={{flexDirection:'row',alignItems:'center'}}>
+          
+            <Text style={styles.sectionTitle}>Reviews</Text>
+
+            <StarRating
+              rating={parseFloat(product.totalrating)}
+              onChange={() => { }}
+              starSize={15}
+              style={styles.starRating}
+              readOnly={true}
+            />
+          </View>
+
+
+
+          {product.ratings.map((rating, index) => (
+            <View key={index} style={styles.reviewContainer}>
+              <StarRating
+                rating={rating.star}
+                onChange={() => { }}
+                starSize={20}
+                style={styles.starRating}
+                readOnly={true}
+              />
+              <Text style={styles.reviewComment}>{rating.comment}</Text>
+            </View>
+          ))}
         </View>
       </ScrollView>
 
-      {/* Price and Add to Cart Button */}
       <View style={styles.priceAddToCartContainer}>
-        <Text style={styles.priceText}>$849.69</Text>
+        <Text style={styles.priceText}>{formattedPrice}</Text>
         <TouchableOpacity style={styles.addToCartButton}>
           <Text style={styles.addToCartText}>Add To Cart</Text>
         </TouchableOpacity>
@@ -98,7 +165,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   scrollContent: {
-    paddingBottom: 70, // Để tránh bị che bởi nút Add To Cart
+    paddingBottom: 70,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -131,9 +198,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10,
   },
+  swiper: {
+    height: 250,
+  },
+  slide: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   productImage: {
-    width: 300,
-    height: 200,
+    width: 250,
+    height: 250,
     resizeMode: 'contain',
   },
   productInfoContainer: {
@@ -141,7 +215,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     padding: 20,
-    elevation: 5, // for Android
+    elevation: 5,
   },
   bestSeller: {
     fontSize: 12,
@@ -167,19 +241,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#0D163A',
     marginBottom: 10,
-  },
-  galleryContainer: {
-    marginBottom: 20,
-  },
-  galleryImage: {
-    width: 80,
-    height: 80,
-    resizeMode: 'contain',
-    marginRight: 10,
   },
   sizeContainer: {
     flexDirection: 'row',
@@ -203,6 +268,18 @@ const styles = StyleSheet.create({
   },
   selectedSizeText: {
     color: '#fff',
+  },
+  starRating: {
+    marginBottom: 10,
+  },
+  reviewContainer: {
+    marginBottom: 10,
+    marginTop: 10
+  },
+  reviewComment: {
+    fontSize: 14,
+    color: '#333',
+    marginTop: 5,
   },
   priceAddToCartContainer: {
     elevation: 5,
@@ -233,6 +310,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

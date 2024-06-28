@@ -2,23 +2,26 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const ProductCard = ({ product }) => {
+const formatPriceVND = (price) => {
+  return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' VND';
+};
+
+const ProductCardPopular = ({ product, onPress }) => {
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress}>
       <Image source={product.image} style={styles.productImage} />
       <Text style={styles.bestSeller}>BEST SELLER</Text>
-      <Text style={styles.productName}>{product.name}</Text>
-      <Text style={styles.productPrice}>${product.price.toFixed(2)}</Text>
-      <TouchableOpacity style={styles.addButton}>
+      <Text style={styles.productName} numberOfLines={1}>{product.title}</Text>
+      <Text style={styles.productPrice}>{formatPriceVND(product.price)}</Text>
+      {/* <TouchableOpacity style={styles.addButton}>
         <Ionicons name="add" size={20} color="white" />
-      </TouchableOpacity>
-    </View>
+      </TouchableOpacity> */}
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-  
     fontFamily: 'Airbnb Cereal App',
     width: 162,
     height: 200,
@@ -34,7 +37,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   productImage: {
-    width: '100%',
+    alignSelf: 'center',
+    width: '80%',
     height: 100,
     resizeMode: 'contain',
   },
@@ -61,10 +65,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: '#007BFF',
-  borderTopLeftRadius: 15,
-  borderBottomRightRadius: 15,
+    borderTopLeftRadius: 15,
+    borderBottomRightRadius: 15,
     padding: 10,
   },
 });
 
-export default ProductCard;
+export default ProductCardPopular;

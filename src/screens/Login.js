@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ToastAndroid,
 } from 'react-native';
 import React, {useState} from 'react';
 import {colors} from '../constains/colors';
@@ -16,21 +17,92 @@ import {useNavigation} from '@react-navigation/native';
 
 const Login = () => {
   const navigation = useNavigation();
-  const [secureEntery, setSecureEntery] = useState(true);
+  const [secureEntry, setSecureEntry] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const handleGoBack = () => {
     navigation.goBack();
   };
   const handleSignup = () => {
-    navigation.navigate('SIGNUP');
+    navigation.navigate('Register');
   };
 
   const handlePassW = () => {
-    navigation.navigate('');
+    navigation.navigate('ForgotPass');
   };
-  const handleProF =() =>{
-    navigation.navigate('PROFILE')
-  }
+
+  const handleProF = () => {
+    navigation.navigate('PROFILE');
+  };
+
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    return regex.test(password);
+  };
+
+  const handleLogin = async () => {
+    let valid = true;
+  
+    if (!email) {
+      setEmailError('Email không được để trống');
+      valid = false;
+    } else if (!validateEmail(email)) {
+      setEmailError('Email không hợp lệ');
+      valid = false;
+    } else {
+      setEmailError('');
+    }
+  
+    if (!password) {
+      setPasswordError('Mật khẩu không được để trống');
+      valid = false;
+    } else if (!validatePassword(password)) {
+      setPasswordError('Mật khẩu phải có ít nhất 6 ký tự, bao gồm cả chữ và số');
+      valid = false;
+    } else {
+      setPasswordError('');
+    }
+  
+    if (!valid) {
+      return;
+    }
+  
+    // Thực hiện đăng nhập ở đây
+    try {
+      const response = await fetch('http://192.168.0.149:5000/api/user/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      const data = await response.json();
+      console.log('Success:', data);
+      ToastAndroid.show('Đăng nhập thành công', ToastAndroid.SHORT);
+      handleProF();
+    } catch (error) {
+      console.error('Error:', error);
+      ToastAndroid.show('Đăng nhập thất bại', ToastAndroid.SHORT);
+    }
+  };
+  
 
   return (
     <View style={styles.container}>
@@ -42,44 +114,50 @@ const Login = () => {
         />
       </TouchableOpacity>
       <View style={styles.textContainer}>
-        <Text style={styles.headingText}>Hello Again!</Text>
+        <Text style={styles.headingText}>Xin Chào </Text>
         <Text style={styles.headingText2}>
-          Welcome Back You’ve Been Missed!
+          Chào mừng bạn trở lại, chúng tôi rất nhớ bạn!
         </Text>
       </View>
       {/* form  */}
       <View style={styles.formContainer}>
-        <View style={styles.inputContainer}>
-          <Ionicons name={'mail-outline'} size={30} color={colors.secondary} />
+        <View style={[styles.inputContainer, emailError ? styles.inputError : null]}>
+          <Ionicons name={'mail-outline'} size={30} color={emailError ? 'red' : colors.secondary} />
           <TextInput
             style={styles.textInput}
             placeholder="Enter your email"
-            placeholderTextColor={colors.secondary}
+            placeholderTextColor={emailError ? 'red' : colors.secondary}
             keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
         </View>
-        <View style={styles.inputContainer}>
-          <SimpleLineIcons name={'lock'} size={30} color={colors.secondary} />
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+        <View style={[styles.inputContainer, passwordError ? styles.inputError : null]}>
+          <SimpleLineIcons name={'lock'} size={30} color={passwordError ? 'red' : colors.secondary} />
           <TextInput
             style={styles.textInput}
             placeholder="Enter your password"
-            placeholderTextColor={colors.secondary}
-            secureTextEntry={secureEntery}
+            placeholderTextColor={passwordError ? 'red' : colors.secondary}
+            secureTextEntry={secureEntry}
+            value={password}
+            onChangeText={setPassword}
           />
           <TouchableOpacity
             onPress={() => {
-              setSecureEntery(prev => !prev);
+              setSecureEntry((prev) => !prev);
             }}>
-            <SimpleLineIcons name={'eye'} size={20} color={colors.secondary} />
+            <Ionicons name={secureEntry ? "eye-off" : "eye"} size={20} color={passwordError ? 'red' : colors.secondary} />
           </TouchableOpacity>
         </View>
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
         <TouchableOpacity onPress={handlePassW}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          <Text style={styles.forgotPasswordText}>Khôi phục mật khẩu?</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleProF} style={styles.loginButtonWrapper}>
-          <Text style={styles.loginText}>Singup</Text>
+        <TouchableOpacity onPress={handleLogin} style={styles.loginButtonWrapper}>
+          <Text style={styles.loginText}>Đăng nhập </Text>
         </TouchableOpacity>
-        <Text style={styles.continueText}>or continue with</Text>
+        <Text style={styles.continueText}>hoặc tiếp tục với</Text>
         <TouchableOpacity style={styles.googleButtonContainer}>
           <Image
             source={require('../images/google.png')}
@@ -88,9 +166,9 @@ const Login = () => {
           <Text style={styles.googleText}> Sign in with google</Text>
         </TouchableOpacity>
         <View style={styles.footerContainer}>
-          <Text style={styles.accountText}>Don’t have an account?</Text>
+          <Text style={styles.accountText}>Bạn chưa có tài khoản?</Text>
           <TouchableOpacity onPress={handleSignup}>
-            <Text style={styles.signupText}>Sign up</Text>
+            <Text style={styles.signupText}>Đăng kí miễn phí</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -116,10 +194,8 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     marginTop: 80,
-    // Để view chứa văn bản có kích thước linh hoạt
-    justifyContent: 'center', // Căn giữa theo chiều ngang
-    alignItems: 'center', // Căn giữa theo chiều dọc
-    // marginTop: 20, // Để tạo khoảng cách với phần trên
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headingText: {
     fontSize: 32,
@@ -129,9 +205,7 @@ const styles = StyleSheet.create({
   headingText2: {
     marginTop: 20,
     fontSize: 18,
-    // color: colors.primary,
-    // fontFamily: fonts.Regular,
-    marginTop: 10, // Để tạo khoảng cách giữa hai dòng văn bản
+    marginTop: 10,
   },
   inputContainer: {
     borderWidth: 1,
@@ -143,10 +217,20 @@ const styles = StyleSheet.create({
     padding: 2,
     marginVertical: 10,
   },
+  inputError: {
+    borderColor: 'red',
+  },
   textInput: {
     flex: 1,
     paddingHorizontal: 10,
     fontFamily: fontsize.Light,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 14,
+    marginTop: 5,
+    marginBottom: 10,
+    paddingHorizontal: 20,
   },
   forgotPasswordText: {
     textAlign: 'right',
@@ -171,7 +255,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     fontSize: 14,
     fontFamily: fontsize.Regular,
-    color: colors.primary,
+    color: colors.secondary,
   },
   googleButtonContainer: {
     flexDirection: 'row',
@@ -199,7 +283,8 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   accountText: {
-    color: colors.primary,
+    marginRight: 10,
+    color: colors.secondary,
     fontFamily: fontsize.Regular,
   },
   signupText: {
