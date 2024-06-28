@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { View } from 'react-native';
+import { NavigationContainer, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import Icon from 'react-native-vector-icons/Ionicons'; 
+import { AppProvider, AppContext } from '../ultils/AppContext';
+import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Home from '../screens/Home';
 import Favourite from '../screens/Favourite';
@@ -11,25 +12,57 @@ import ProductDetail from '../screens/ProductDetail';
 import MyCart from '../screens/MyCart';
 import Profile from '../screens/Profile';
 import NotificationsScreen from '../screens/notificatiions';
-import { AppProvider, AppContext } from '../ultils/AppContext'; 
 import Welcome from '../screens/Welcome';
-import LoadingScreen from '../screens/LoadingScreen'; 
-import  settings  from '../screens/Setting';
-import  Search  from '../screens/search';
+import LoadingScreen from '../screens/LoadingScreen';
+import Settings from '../screens/Setting';
+import Search from '../screens/search';
+import ProductAll from '../screens/ProductAll';
+import ForgotPass from '../screens/PassW';
+import Login from '../screens/Login';
+import Signup from '../screens/Signup';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-const HomeStack = () =>{
+const User = () => {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="Homee" component={Home} />
-      <Stack.Screen name="Notifications" component={NotificationsScreen} />
-      <Stack.Screen name="Search" component={Search} />
-      <Stack.Screen name="ProductDetail" component={ProductDetail} />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Register" component={Signup} />
+      <Stack.Screen name="ForgotPass" component={ForgotPass} />
     </Stack.Navigator>
   );
 }
+
+const HomeStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="Search" component={Search} />
+      <Stack.Screen name="ProductDetail" component={ProductDetail} />
+      <Stack.Screen name="ProductAll" component={ProductAll} />
+      <Stack.Screen name="User" component={User} />
+      
+    </Stack.Navigator>
+  );
+};
+
+const getTabBarVisibility = (route) => {
+  const routeName = getFocusedRouteNameFromRoute(route) ?? '';
+
+  if (
+    routeName === 'Notifications' ||
+    routeName === 'Search' ||
+    routeName === 'ProductDetail' ||
+    routeName === 'ProductAll' ||
+    routeName === 'User'
+    
+  ) {
+    return 'none';
+  }
+  return 'flex';
+};
 
 const Main = () => {
   return (
@@ -38,10 +71,11 @@ const Main = () => {
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarShowLabel: false,
+          tabBarStyle: { display: getTabBarVisibility(route) },
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
             switch (route.name) {
-              case 'Home':
+              case 'Homee':
                 iconName = focused ? 'home' : 'home-outline';
                 break;
               case 'Favourite':
@@ -65,11 +99,11 @@ const Main = () => {
           tabBarInactiveTintColor: 'gray',
         })}
       >
-        <Tab.Screen name="Home" component={HomeStack} />
+        <Tab.Screen name="Homee" component={HomeStack} />
         <Tab.Screen name="Favourite" component={Favourite} />
         <Tab.Screen name="MyCart" component={MyCart} />
         <Tab.Screen name="NotificationsScreen" component={NotificationsScreen} />
-        <Tab.Screen name="Settings" component={settings} />
+        <Tab.Screen name="Settings" component={Settings} />
       </Tab.Navigator>
     </View>
   );

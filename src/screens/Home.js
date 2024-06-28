@@ -14,7 +14,7 @@ import SearchBar from '../components/SearchBar';
 import ProductCardPopular from '../components/ProductCardPopular';
 import ProductCardArrival from '../components/ProductCardArrival';
 
-const Home = ({navigation}) => {
+const Home = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState('');
   const [popularProducts, setPopularProducts] = useState([]);
@@ -66,17 +66,35 @@ const Home = ({navigation}) => {
     }
   }, [activeCategory]);
 
-  const handleSeeAll = () => {
-    console.log('See all pressed');
+  const handleItemProduct = (id) => {
+    navigation.navigate('ProductDetail', { id });
   };
 
-  const handleSearch = () =>{
-   navigation.navigate('Search')
-  }
+  const handleSearch = () => {
+    navigation.navigate('Search');
+  };
 
-  const handleNotification = () =>{
-    navigation.navigate('Notifications')
-  }
+  const handleNotification = () => {
+    navigation.navigate('Notifications');
+  };
+
+  const handlePopular = () => {
+    navigation.navigate('ProductAll', {
+      header: 'Popular Shoes',
+      titleProduct: 'Best Seller',
+      brand: activeCategory,
+      category: 'popular',
+    });
+  };
+
+  const handleArrival = () => {
+    navigation.navigate('ProductAll', {
+      header: 'New Arrivals',
+      titleProduct: 'Best Choice',
+      brand: activeCategory,
+      category: 'new-arrivals',
+    });
+  };
 
   return (
     <ScrollView>
@@ -99,7 +117,7 @@ const Home = ({navigation}) => {
         </View>
 
         {/* search */}
-        <SearchBar onPress={handleSearch}/>
+        <SearchBar onPress={handleSearch} />
 
         {/* categories */}
         <View style={styles.categoryContainer}>
@@ -135,7 +153,7 @@ const Home = ({navigation}) => {
 
         <View style={styles.headerContainer}>
           <Text style={styles.title}>Popular Shoes</Text>
-          <TouchableOpacity onPress={handleSeeAll}>
+          <TouchableOpacity onPress={handlePopular}>
             <Text style={styles.seeAll}>See all</Text>
           </TouchableOpacity>
         </View>
@@ -144,14 +162,14 @@ const Home = ({navigation}) => {
         <View style={{ marginLeft: 25, marginTop: 10 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {popularProducts.map((product, index) => (
-              <ProductCardPopular key={index} product={product} />
+              <ProductCardPopular key={index} product={product} onPress={() => handleItemProduct(product.id)} />
             ))}
           </ScrollView>
         </View>
 
         <View style={styles.headerContainer}>
           <Text style={styles.title}>New Arrivals</Text>
-          <TouchableOpacity onPress={handleSeeAll}>
+          <TouchableOpacity onPress={handleArrival}>
             <Text style={styles.seeAll}>See all</Text>
           </TouchableOpacity>
         </View>
@@ -160,7 +178,7 @@ const Home = ({navigation}) => {
         <View style={{ marginLeft: 25, marginTop: 10, marginBottom: 20 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {newArrivalProducts.map((product, index) => (
-              <ProductCardArrival key={index} product={product} />
+              <ProductCardArrival key={index} product={product} onPress={() => handleItemProduct(product.id)} />
             ))}
           </ScrollView>
         </View>

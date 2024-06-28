@@ -28,11 +28,11 @@ const Login = () => {
     navigation.goBack();
   };
   const handleSignup = () => {
-    navigation.navigate('SIGNUP');
+    navigation.navigate('Register');
   };
 
   const handlePassW = () => {
-    navigation.navigate('PASSW');
+    navigation.navigate('Register');
   };
 
   const handleProF = () => {
