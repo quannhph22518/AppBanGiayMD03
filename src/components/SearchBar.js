@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
 
-const SearchBar = () => {
+const SearchBar = ({ onPress }) => {
   
   return (
-    <TouchableOpacity style={styles.searchContainer}>
+    <TouchableOpacity style={styles.searchContainer} onPress={onPress}>
       <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
       <Text style={styles.placeholderText}>Looking for shoes</Text>
     </TouchableOpacity>
@@ -21,11 +20,11 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 17,
     margin: 10,
-    elevation: 5, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 }, // iOS shadow
-    shadowOpacity: 0.1, // iOS shadow
-    shadowRadius: 5, // iOS shadow
+    elevation: 5,
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1, 
+    shadowRadius: 5, 
   },
   searchIcon: {
     marginLeft: 10,

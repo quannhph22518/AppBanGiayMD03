@@ -3,12 +3,17 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ProductCard = ({ product }) => {
+
+  const formatPriceVND = (price) => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' VND';
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.textContainer}>
         <Text style={styles.bestChoice}>BEST CHOICE</Text>
-        <Text style={styles.productName}>{product.name}</Text>
-        <Text style={styles.productPrice}>${product.price.toFixed(2)}</Text>
+        <Text style={styles.productName } numberOfLines={1}>{product.title}</Text>
+        <Text style={styles.productPrice}>{formatPriceVND(product.price)}</Text>
       </View>
       <Image source={product.image} style={styles.productImage} />
     </View>

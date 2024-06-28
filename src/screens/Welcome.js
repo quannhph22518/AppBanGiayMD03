@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useContext } from 'react';
 import {
   Image,
   StyleSheet,
@@ -8,18 +8,24 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Swiper from 'react-native-swiper';
-import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppContext } from '../ultils/AppContext'; 
 
 const Welcome = () => {
-  const navigation = useNavigation();
+  const { isCheckGetStarted, setIsCheckGetStarted } = useContext(AppContext); 
   const swiperRef = useRef(null);
 
-  const handleLogin = () => {
-    navigation.navigate('LOGIN'); // Chuyển hướng sang màn hình LOGIN
+  const handleGetStarted = async () => {
+    try {
+      await AsyncStorage.setItem('isCheckGetStarted', 'true');
+      setIsCheckGetStarted(true); 
+    } catch (error) {
+      console.error('Error saving data', error);
+    }
   };
 
   const handleNext = () => {
-    swiperRef.current.scrollBy(1); // Chuyển sang slide tiếp theo
+    swiperRef.current.scrollBy(1); 
   };
 
   return (
@@ -50,7 +56,7 @@ const Welcome = () => {
           <Text style={styles.title}>Start Journey With Nike</Text>
           <Text style={styles.subtitle}>Smart, Gorgeous & Fashionable Collection</Text>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.roundButton} onPress={handleLogin}>
+            <TouchableOpacity style={styles.roundButton} onPress={handleGetStarted}>
               <Text style={styles.buttonText}>Get Started</Text>
             </TouchableOpacity>
           </View>
@@ -97,14 +103,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   roundButton: {
-    backgroundColor: '#1E90FF', // Màu xanh nước biển
+    backgroundColor: '#1E90FF',
     paddingVertical: 15,
     paddingHorizontal: 30,
-    borderRadius: 25, // Bo tròn góc của nút
+    borderRadius: 25,
     alignItems: 'center',
   },
   nextButton: {
-    backgroundColor: '#1E90FF', // Màu xanh nước biển
+    backgroundColor: '#1E90FF',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 25,

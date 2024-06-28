@@ -5,7 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
+  ToastAndroid,
+  ScrollView,
 } from "react-native";
 import React, { useState } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -113,7 +114,7 @@ const Signup = () => {
     };
 
     try {
-      const response = await fetch('http://192.168.10.106:5000/api/user/register', {
+      const response = await fetch('http://192.168.0.149:5000/api/user/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,19 +124,19 @@ const Signup = () => {
 
       if (response.ok) {
         const data = await response.json();
-        Alert.alert("Success", "Account created successfully!");
+        ToastAndroid.show("Account created successfully!", ToastAndroid.SHORT);
         navigation.navigate("LOGIN");
       } else {
         const errorData = await response.json();
-        Alert.alert("Error", errorData.message || "Failed to create account");
+        ToastAndroid.show(errorData.message || "Failed to create account", ToastAndroid.SHORT);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to create account. Please try again later.");
+      ToastAndroid.show("Failed to create account. Please try again later.", ToastAndroid.SHORT);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <TouchableOpacity style={styles.backButtonWrapper} onPress={handleGoBack}>
         <Ionicons name={"arrow-back-outline"} color={colors.primary} size={25} />
       </TouchableOpacity>
@@ -143,7 +144,6 @@ const Signup = () => {
         <Text style={styles.headingText}>Tạo tài khoản</Text>
         <Text style={styles.headingText1}>Hãy cùng nhau tạo tài khoản</Text>
       </View>
-      {/* form */}
       <View style={styles.formContainer}>
         <View style={[styles.inputContainer, firstNameError ? styles.inputError : null]}>
           <Ionicons name={"person-outline"} size={30} color={firstNameError ? 'red' : colors.secondary} />
@@ -244,7 +244,7 @@ const Signup = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -252,7 +252,7 @@ export default Signup;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: colors.white,
     padding: 20,
   },
@@ -300,10 +300,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     fontFamily: fontsize.Light,
-    color: colors.secondary, // Đặt màu văn bản đầu vào thành màu secondary
+    color: colors.secondary,
   },
   textInputError: {
-    color: 'red', // Đặt màu văn bản đầu vào khi có lỗi
+    color: 'red',
   },
   errorText: {
     color: 'red',
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     fontSize: 14,
     fontFamily: fontsize.Regular,
-    color: colors.primary,
+    color: colors.secondary,
   },
   googleButtonContainer: {
     flexDirection: "row",
@@ -363,8 +363,9 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   accountText: {
-    color: colors.primary,
+    color: colors.secondary,
     fontFamily: fontsize.Regular,
+    marginRight: 10
   },
   signupText: {
     color: colors.primary,
