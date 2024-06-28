@@ -6,9 +6,9 @@ const formatPriceVND = (price) => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' VND';
 };
 
-const ProductCardPopular = ({ product }) => {
+const ProductCardPopular = ({ product, onPress }) => {
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress}>
       <Image source={product.image} style={styles.productImage} />
       <Text style={styles.bestSeller}>BEST SELLER</Text>
       <Text style={styles.productName} numberOfLines={1}>{product.title}</Text>
@@ -16,7 +16,7 @@ const ProductCardPopular = ({ product }) => {
       {/* <TouchableOpacity style={styles.addButton}>
         <Ionicons name="add" size={20} color="white" />
       </TouchableOpacity> */}
-    </View>
+    </TouchableOpacity>
   );
 };
 
