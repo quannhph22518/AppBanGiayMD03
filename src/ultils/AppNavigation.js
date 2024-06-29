@@ -48,6 +48,16 @@ const HomeStack = () => {
   );
 };
 
+const FavouriteStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Favouritee" component={Favourite} />
+      <Stack.Screen name="User" component={User} />
+      <Stack.Screen name="ProductDetail" component={ProductDetail} />
+    </Stack.Navigator>
+  );
+}
+
 const getTabBarVisibility = (route) => {
   const routeName = getFocusedRouteNameFromRoute(route) ?? '';
 
@@ -100,7 +110,7 @@ const Main = () => {
         })}
       >
         <Tab.Screen name="Homee" component={HomeStack} />
-        <Tab.Screen name="Favourite" component={Favourite} />
+        <Tab.Screen name="Favourite" component={FavouriteStack} />
         <Tab.Screen name="MyCart" component={MyCart} />
         <Tab.Screen name="NotificationsScreen" component={NotificationsScreen} />
         <Tab.Screen name="Settings" component={Settings} />
@@ -110,7 +120,7 @@ const Main = () => {
 };
 
 const AppNavigation = () => {
-  const { isCheckGetStarted, setIsCheckGetStarted } = useContext(AppContext);
+  const { isCheckGetStarted, setIsCheckGetStarted, isCheckLogin, setIsCheckLogin } = useContext(AppContext);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -120,6 +130,9 @@ const AppNavigation = () => {
         if (value !== null) {
           setIsCheckGetStarted(value === 'true');
         }
+
+        const storedIsCheckLogin = await AsyncStorage.getItem('isCheckLogin');
+        setIsCheckLogin(storedIsCheckLogin === 'true');
       } catch (error) {
         console.error('Error loading data', error);
       } finally {

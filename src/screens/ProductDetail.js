@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, ActivityIndicator, ToastAndroid } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Swiper from 'react-native-swiper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import StarRating from 'react-native-star-rating-widget';
+import { AppContext } from '../ultils/AppContext';
 
 const ProductDetail = ({ navigation, route }) => {
   const { id } = route.params;
@@ -12,17 +13,27 @@ const ProductDetail = ({ navigation, route }) => {
   const [selectedSize, setSelectedSize] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formattedPrice, setFormattedPrice] = useState("0 VND");
+  const [isFavourite, setIsFavourite] = useState(false);
+  const { isCheckLogin, token, userId } = useContext(AppContext);
 
   useEffect(() => {
-    axios.get(`http://192.168.0.149:5000/api/product/${id}`)
-      .then(response => {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`http://192.168.0.149:5000/api/product/${id}`);
         setProduct(response.data);
         setLoading(false);
-      })
-      .catch(error => {
+
+        // Kiểm tra xem sản phẩm đã được yêu thích hay chưa
+        if (response.data.isFavourite) {
+          setIsFavourite(true);
+        }
+      } catch (error) {
         console.error(error);
         setLoading(false);
-      });
+      }
+    };
+
+    fetchProduct();
   }, [id]);
 
   const handleSizePress = (size) => {
@@ -34,14 +45,35 @@ const ProductDetail = ({ navigation, route }) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  const handleFavoute = async () => {
-    const token = await AsyncStorage.getItem('token');
-    if (token === null) {
+  const handleFavourite = async () => {
+    if (!isCheckLogin) {
       navigation.navigate('User');
     } else {
-      // Thêm logic để xử lý khi người dùng đã đăng nhập và nhấn nút Favourite
+      try {
+        const response = await axios.put(
+          'http://192.168.0.149:5000/api/product/wishlist',
+          {
+            _id: userId,
+            prodId: product._id
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+
+        setIsFavourite(!isFavourite);
+        ToastAndroid.show(
+          isFavourite ? 'Removed from wishlist' : 'Added to wishlist',
+          ToastAndroid.SHORT
+        );
+      } catch (error) {
+        console.error('Error updating wishlist:', error);
+        ToastAndroid.show('Failed to update wishlist', ToastAndroid.SHORT);
+      }
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -67,8 +99,8 @@ const ProductDetail = ({ navigation, route }) => {
             <Ionicons name="chevron-back-outline" size={24} color="black" />
           </TouchableOpacity>
           <Text style={styles.title}>Product Details</Text>
-          <TouchableOpacity onPress={handleFavoute} style={styles.iconContainer}>
-            <Ionicons name="heart-outline" size={24} color="black" />
+          <TouchableOpacity onPress={handleFavourite} style={styles.iconContainer}>
+            <Ionicons name={isFavourite ? "heart" : "heart-outline"} size={24} color={isFavourite ? "red" : "black"} />
           </TouchableOpacity>
         </View>
 
@@ -77,7 +109,7 @@ const ProductDetail = ({ navigation, route }) => {
             showsButtons={false}
             autoplay={true}
             loop={true}
-            duration={2000}
+            autoplayTimeout={2.5}
             style={styles.swiper}
           >
             {product.images.map((image, index) => (
@@ -119,10 +151,8 @@ const ProductDetail = ({ navigation, route }) => {
             </ScrollView>
           </View>
 
-          <View style={{flexDirection:'row',alignItems:'center'}}>
-          
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text style={styles.sectionTitle}>Reviews</Text>
-
             <StarRating
               rating={parseFloat(product.totalrating)}
               onChange={() => { }}
@@ -131,8 +161,6 @@ const ProductDetail = ({ navigation, route }) => {
               readOnly={true}
             />
           </View>
-
-
 
           {product.ratings.map((rating, index) => (
             <View key={index} style={styles.reviewContainer}>
@@ -274,7 +302,7 @@ const styles = StyleSheet.create({
   },
   reviewContainer: {
     marginBottom: 10,
-    marginTop: 10
+    marginTop: 10,
   },
   reviewComment: {
     fontSize: 14,

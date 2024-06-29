@@ -125,7 +125,7 @@ const Signup = () => {
       if (response.ok) {
         const data = await response.json();
         ToastAndroid.show("Account created successfully!", ToastAndroid.SHORT);
-        navigation.navigate("LOGIN");
+        navigation.navigate("Login");
       } else {
         const errorData = await response.json();
         ToastAndroid.show(errorData.message || "Failed to create account", ToastAndroid.SHORT);
