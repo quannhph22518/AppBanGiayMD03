@@ -6,37 +6,38 @@ import {
   TouchableOpacity,
   View,
   ToastAndroid,
+  ActivityIndicator,
 } from 'react-native';
-import React, {useState} from 'react';
-import {colors} from '../constains/colors';
-import {fontsize} from '../constains/fontsize';
+import React, { useState, useContext } from 'react';
+import { colors } from '../constains/colors';
+import { fontsize } from '../constains/fontsize';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppContext } from '../ultils/AppContext'; 
 
 const Login = () => {
   const navigation = useNavigation();
+  const { setToken, setUserId, setIsCheckLogin } = useContext(AppContext); 
   const [secureEntry, setSecureEntry] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleGoBack = () => {
     navigation.goBack();
   };
+
   const handleSignup = () => {
     navigation.navigate('Register');
   };
 
   const handlePassW = () => {
     navigation.navigate('ForgotPass');
-  };
-
-  const handleProF = () => {
-    navigation.navigate('PROFILE');
   };
 
   const validateEmail = (email) => {
@@ -51,7 +52,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     let valid = true;
-  
+
     if (!email) {
       setEmailError('Email không được để trống');
       valid = false;
@@ -61,7 +62,7 @@ const Login = () => {
     } else {
       setEmailError('');
     }
-  
+
     if (!password) {
       setPasswordError('Mật khẩu không được để trống');
       valid = false;
@@ -71,12 +72,13 @@ const Login = () => {
     } else {
       setPasswordError('');
     }
-  
+
     if (!valid) {
       return;
     }
-  
-    // Thực hiện đăng nhập ở đây
+
+    setLoading(true);
+
     try {
       const response = await fetch('http://192.168.0.149:5000/api/user/login', {
         method: 'POST',
@@ -88,21 +90,36 @@ const Login = () => {
           password: password,
         }),
       });
-  
+
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Network response was not ok');
       }
-  
+
       const data = await response.json();
       console.log('Success:', data);
+
+      // Lưu token, ID của người dùng và isCheckLogin vào AsyncStorage
+      await AsyncStorage.setItem('token', data.token);
+      await AsyncStorage.setItem('userId', data._id);
+      await AsyncStorage.setItem('isCheckLogin', 'true');
+
+      // Cập nhật ngữ cảnh
+      setToken(data.token);
+      setUserId(data._id);
+      setIsCheckLogin(true);
+
       ToastAndroid.show('Đăng nhập thành công', ToastAndroid.SHORT);
-      handleProF();
+
+      // Điều hướng quay lại màn hình trước đó
+      navigation.goBack();
     } catch (error) {
       console.error('Error:', error);
-      ToastAndroid.show('Đăng nhập thất bại', ToastAndroid.SHORT);
+      ToastAndroid.show(`Đăng nhập thất bại: ${error.message}`, ToastAndroid.SHORT);
+    } finally {
+      setLoading(false);
     }
   };
-  
 
   return (
     <View style={styles.container}>
@@ -114,12 +131,12 @@ const Login = () => {
         />
       </TouchableOpacity>
       <View style={styles.textContainer}>
-        <Text style={styles.headingText}>Xin Chào </Text>
+        <Text style={styles.headingText}>Xin Chào</Text>
         <Text style={styles.headingText2}>
           Chào mừng bạn trở lại, chúng tôi rất nhớ bạn!
         </Text>
       </View>
-      {/* form  */}
+      {/* form */}
       <View style={styles.formContainer}>
         <View style={[styles.inputContainer, emailError ? styles.inputError : null]}>
           <Ionicons name={'mail-outline'} size={30} color={emailError ? 'red' : colors.secondary} />
@@ -154,8 +171,12 @@ const Login = () => {
         <TouchableOpacity onPress={handlePassW}>
           <Text style={styles.forgotPasswordText}>Khôi phục mật khẩu?</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleLogin} style={styles.loginButtonWrapper}>
-          <Text style={styles.loginText}>Đăng nhập </Text>
+        <TouchableOpacity onPress={handleLogin} style={styles.loginButtonWrapper} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={styles.loginText}>Đăng nhập</Text>
+          )}
         </TouchableOpacity>
         <Text style={styles.continueText}>hoặc tiếp tục với</Text>
         <TouchableOpacity style={styles.googleButtonContainer}>
@@ -207,6 +228,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 10,
   },
+  formContainer: {
+    marginTop: 20,
+  },
   inputContainer: {
     borderWidth: 1,
     borderColor: colors.secondary,
@@ -242,13 +266,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 100,
     marginTop: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
   },
   loginText: {
     color: colors.white,
     fontSize: 20,
     fontFamily: fontsize.SemiBold,
-    textAlign: 'center',
-    padding: 10,
   },
   continueText: {
     textAlign: 'center',
@@ -283,7 +308,6 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   accountText: {
-    marginRight: 10,
     color: colors.secondary,
     fontFamily: fontsize.Regular,
   },
