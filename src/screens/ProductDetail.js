@@ -22,7 +22,7 @@ const ProductDetail = ({ navigation, route }) => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await axios.get(`http://192.168.0.149:3000/api/product/${id}`);
+        const response = await axios.get(`http://192.168.26.7:5000/api/product/${id}`);
         setProduct(response.data);
         setLoading(false);
 
@@ -47,7 +47,7 @@ const ProductDetail = ({ navigation, route }) => {
       navigation.navigate('User');
     } else {
       try {
-        const response = await axios.put('http://192.168.0.149:3000/api/product/wishlist', {
+        const response = await axios.put('http://192.168.26.7:5000/api/product/wishlist', {
           _id: userId,
           prodId: product._id,
         }, {
@@ -76,7 +76,7 @@ const ProductDetail = ({ navigation, route }) => {
   
     try {
       const response = await axios.post(
-        'http://192.168.0.149:3000/api/user/cart',
+        'http://192.168.26.7:5000/api/user/cart',
         { cart: [cartItem] },
         {
           headers: {
