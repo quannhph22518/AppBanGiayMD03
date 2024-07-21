@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState, useContext, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,52 +6,79 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
+  Button,
+  ToastAndroid,
+  Alert
 } from 'react-native';
-
 import CheckBox from '@react-native-community/checkbox';
+import { AppContext } from '../ultils/AppContext';
+import { useFocusEffect } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
-const MyCart = () => {
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      image: require('../images/nike_2.jpg'),
-      title: 'Nike Club Max',
-      price: 64.95,
-      size: 'L',
-      quantity: 1,
-      checked: false,
-    },
-    {
-      id: 2,
-      image: require('../images/nike_3.jpg'),
-      title: 'Nike Air Max 200',
-      price: 64.95,
-      size: 'XL',
-      quantity: 1,
-      checked: false,
-    },
-    {
-      id: 3,
-      image: require('../images/nikee.jpg'),
-      title: 'Nike Air Max',
-      price: 64.95,
-      size: 'XXL',
-      quantity: 1,
-      checked: false,
-    },
-  ]);
+const MyCart = ({ navigation }) => {
+  const { isCheckLogin, token } = useContext(AppContext);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isCheckLogin) {
+        fetchCart();
+      }
+    }, [isCheckLogin])
+  );
+
+  const fetchCart = async () => {
+    try {
+      const response = await fetch('http://192.168.26.7:5000/api/user/cart', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      if (data === null || !data.products) {
+        setItems([]);
+      } else {
+        const cartItems = data.products.map(item => ({
+          id: item.product._id,
+          image: { uri: item.product.images[0].url },
+          title: item.product.title,
+          price: item.price,
+          color: item.color,
+          quantity: item.count,
+          checked: false,
+        }));
+        setItems(cartItems);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      ToastAndroid.show('Lỗi khi tải dữ liệu giỏ hàng', ToastAndroid.SHORT);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (value) => {
+    return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  };
 
   const subtotal = items.reduce(
     (sum, item) => sum + (item.checked ? item.price * item.quantity : 0),
     0,
   );
-  const shipping = 40.9;
+  const shipping = items.some(item => item.checked) ? 40900 : 0;
   const total = subtotal + shipping;
 
   const incrementQuantity = id => {
     setItems(prevItems =>
       prevItems.map(item =>
-        item.id === id ? {...item, quantity: item.quantity + 1} : item,
+        item.id === id ? { ...item, quantity: item.quantity + 1 } : item,
       ),
     );
   };
@@ -60,9 +87,26 @@ const MyCart = () => {
     setItems(prevItems =>
       prevItems.map(item =>
         item.id === id && item.quantity > 1
-          ? {...item, quantity: item.quantity - 1}
-          : item,
+          ? { ...item, quantity: item.quantity - 1 } : item,
       ),
+    );
+  };
+
+  const confirmRemoveItem = id => {
+    Alert.alert(
+      "Xác nhận",
+      "Bạn có chắc chắn muốn xóa sản phẩm này?",
+      [
+        {
+          text: "Không",
+          style: "cancel"
+        },
+        {
+          text: "Có",
+          onPress: () => removeItem(id)
+        }
+      ],
+      { cancelable: false }
     );
   };
 
@@ -72,13 +116,13 @@ const MyCart = () => {
 
   const toggleCheckBox = id => {
     setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? {...item, checked: !item.checked} : item,
+prevItems.map(item =>
+        item.id === id ? { ...item, checked: !item.checked } : item,
       ),
     );
   };
 
-  const renderItem = ({item}) => (
+  const renderItem = ({ item }) => (
     <View style={styles.cartItem}>
       <CheckBox
         value={item.checked}
@@ -86,10 +130,9 @@ const MyCart = () => {
       />
       <Image source={item.image} style={styles.image} />
       <View style={styles.info}>
-        <Text style={styles.itemTitle}>{item.title}</Text>
-        <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+        <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.price}>{formatCurrency(item.price)}</Text>
       </View>
-      <Text style={styles.size}>{item.size}</Text>
       <View style={styles.quantityControls}>
         <TouchableOpacity
           style={styles.quantityButton}
@@ -105,11 +148,40 @@ const MyCart = () => {
       </View>
       <TouchableOpacity
         style={styles.removeButton}
-        onPress={() => removeItem(item.id)}>
-        <Text style={styles.removeButtonText}>🗑️</Text>
+        onPress={() => confirmRemoveItem(item.id)}>
+        <Icon name="trash" size={20} color="blue" />
       </TouchableOpacity>
     </View>
   );
+
+  if (!isCheckLogin) {
+    return (
+      <View style={styles.loginContainer}>
+        <Text style={styles.loginPrompt}>Bạn cần đăng nhập để sử dụng chức năng này.</Text>
+        <Button title="Đăng nhập" onPress={() => navigation.navigate('User')} />
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>My Cart</Text>
+        <Text>Đang tải...</Text>
+      </View>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>My Cart</Text>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Giỏ hàng đang trống</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -121,19 +193,19 @@ const MyCart = () => {
       />
       <View style={styles.summary}>
         <View style={styles.summaryItem}>
-          <Text>Subtotal</Text>
-          <Text>${subtotal.toFixed(2)}</Text>
+          <Text>Tạm tính</Text>
+          <Text>{formatCurrency(subtotal)}</Text>
         </View>
         <View style={styles.summaryItem}>
-          <Text>Shipping</Text>
-          <Text>${shipping.toFixed(2)}</Text>
+          <Text>Phí vận chuyển</Text>
+          <Text>{formatCurrency(shipping)}</Text>
         </View>
         <View style={styles.summaryItem}>
-          <Text>Total Cost</Text>
-          <Text>${total.toFixed(2)}</Text>
+          <Text>Tổng cộng</Text>
+          <Text>{formatCurrency(total)}</Text>
         </View>
         <TouchableOpacity style={styles.checkoutButton}>
-          <Text style={styles.checkoutButtonText}>Checkout</Text>
+          <Text style={styles.checkoutButtonText}>Thanh toán</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -144,7 +216,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f8f9fa',
+backgroundColor: '#f8f9fa',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     textAlign: 'center',
@@ -160,7 +237,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
@@ -170,6 +247,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 10,
     marginRight: 20,
+    resizeMode: 'contain'
   },
   info: {
     flex: 1,
@@ -180,16 +258,11 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 14,
-    color: '#888',
-  },
-  size: {
-    marginLeft: 20,
-    fontSize: 14,
+    color: '#ff4500',
   },
   quantityControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 20,
   },
   quantityButton: {
     backgroundColor: '#f0f0f0',
@@ -210,10 +283,6 @@ const styles = StyleSheet.create({
   removeButton: {
     marginLeft: 20,
   },
-  removeButtonText: {
-    color: 'red',
-    fontSize: 20,
-  },
   summary: {
     marginTop: 20,
   },
@@ -232,6 +301,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  loginContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginPrompt: {
+    fontSize: 18,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });
 
