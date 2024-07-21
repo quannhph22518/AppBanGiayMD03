@@ -10,7 +10,7 @@ const ProductAll = ({ navigation, route }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(`http://192.168.0.149:5000/api/product/tag/${brand}/${category}`);
+        const response = await axios.get(`http://192.168.0.149:3000/api/product/tag/${brand}/${category}`);
         const formattedProducts = response.data.map(product => ({
           id: product._id,
           title: product.title,

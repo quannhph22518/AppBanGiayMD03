@@ -19,7 +19,7 @@ const Favourite = ({ navigation }) => {
 
   const fetchWishlist = async () => {
     try {
-      const response = await fetch('http://192.168.0.149:5000/api/user/wishlist', {
+      const response = await fetch('http://192.168.0.149:3000/api/user/wishlist', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -42,7 +42,7 @@ const Favourite = ({ navigation }) => {
       }));
       setFilteredWishlist(filteredData);
 
-      console.log(filteredData);
+      
     } catch (error) {
       console.error('Error:', error);
       ToastAndroid.show('Lỗi khi tải dữ liệu sản phẩm', ToastAndroid.SHORT);
@@ -57,7 +57,7 @@ const Favourite = ({ navigation }) => {
     <TouchableOpacity onPress={() => handleProductPress(item.id)} style={styles.productCard}>
       <Image source={{ uri: item.image }} style={styles.productImage} />
       <Text style={styles.bestSeller}>BEST SELLER</Text>
-      <Text style={styles.productName}>{item.title}</Text>
+      <Text style={styles.productName} numberOfLines={2}>{item.title}</Text>
       <View style={styles.priceColorContainer}>
         <Text style={styles.productPrice}>{item.price.toLocaleString()} VND</Text>
       </View>
