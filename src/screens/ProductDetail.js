@@ -1,29 +1,31 @@
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, ActivityIndicator, ToastAndroid } from 'react-native';
 import React, { useState, useEffect, useContext } from 'react';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, ActivityIndicator, ToastAndroid, Modal, Pressable, FlatList } from 'react-native';
 import axios from 'axios';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Swiper from 'react-native-swiper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import StarRating from 'react-native-star-rating-widget';
 import { AppContext } from '../ultils/AppContext';
+import QuantitySelector from '../components/QuantitySelector';
 
 const ProductDetail = ({ navigation, route }) => {
   const { id } = route.params;
   const [product, setProduct] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [formattedPrice, setFormattedPrice] = useState("0 VND");
   const [isFavourite, setIsFavourite] = useState(false);
   const { isCheckLogin, token, userId } = useContext(AppContext);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [action, setAction] = useState('');
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await axios.get(`http://192.168.0.149:5000/api/product/${id}`);
+        const response = await axios.get(`http://192.168.0.149:3000/api/product/${id}`);
         setProduct(response.data);
         setLoading(false);
 
-        // Kiểm tra xem sản phẩm đã được yêu thích hay chưa
         if (response.data.isFavourite) {
           setIsFavourite(true);
         }
@@ -36,12 +38,7 @@ const ProductDetail = ({ navigation, route }) => {
     fetchProduct();
   }, [id]);
 
-  const handleSizePress = (size) => {
-    setSelectedSize(size);
-    setFormattedPrice(formatPrice(product.price) + " VND");
-  };
-
-  const formatPrice = (price) => {
+  const formatPrice = price => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
@@ -50,29 +47,66 @@ const ProductDetail = ({ navigation, route }) => {
       navigation.navigate('User');
     } else {
       try {
-        const response = await axios.put(
-          'http://192.168.0.149:5000/api/product/wishlist',
-          {
-            _id: userId,
-            prodId: product._id
+        const response = await axios.put('http://192.168.0.149:3000/api/product/wishlist', {
+          _id: userId,
+          prodId: product._id,
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          }
-        );
+        });
 
         setIsFavourite(!isFavourite);
-        ToastAndroid.show(
-          isFavourite ? 'Removed from wishlist' : 'Added to wishlist',
-          ToastAndroid.SHORT
-        );
+        ToastAndroid.show(isFavourite ? 'Removed from wishlist' : 'Added to wishlist', ToastAndroid.SHORT);
       } catch (error) {
         console.error('Error updating wishlist:', error);
         ToastAndroid.show('Failed to update wishlist', ToastAndroid.SHORT);
       }
     }
+  };
+
+  const handleAddToCart = async () => {
+    const cartItem = {
+      _id: product._id,
+      count: quantity,
+      color: selectedColor,
+    };
+  
+    console.log("Payload:", JSON.stringify({ cart: [cartItem] }));
+  
+    try {
+      const response = await axios.post(
+        'http://192.168.0.149:3000/api/user/cart',
+        { cart: [cartItem] },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      ToastAndroid.show('Added to cart successfully', ToastAndroid.SHORT);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      ToastAndroid.show('Failed to add to cart', ToastAndroid.SHORT);
+    } finally {
+      resetSelections();
+      setModalVisible(false);
+    }
+  };
+  
+  
+
+
+
+  const renderPagination = (index, total) => {
+    return (
+      <View style={styles.paginationStyle}>
+        <Text style={styles.paginationText}>
+          {index + 1}/{total}
+        </Text>
+      </View>
+    );
   };
 
   if (loading) {
@@ -91,27 +125,32 @@ const ProductDetail = ({ navigation, route }) => {
     );
   }
 
+  const getImageForColor = (color) => {
+    const image = product.images.find(img => img.public_id === color);
+    return image ? image.url : product.images[0].url;
+  };
+
+  const resetSelections = () => {
+    setSelectedColor(null);
+    setSelectedSize(null);
+    setQuantity(1);
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.headerContainer}>
-          <TouchableOpacity style={styles.iconContainer} onPress={() => { navigation.goBack() }}>
+          <TouchableOpacity style={styles.iconContainer} onPress={() => { navigation.goBack(); }}>
             <Ionicons name="chevron-back-outline" size={24} color="black" />
           </TouchableOpacity>
           <Text style={styles.title}>Product Details</Text>
           <TouchableOpacity onPress={handleFavourite} style={styles.iconContainer}>
-            <Ionicons name={isFavourite ? "heart" : "heart-outline"} size={24} color={isFavourite ? "red" : "black"} />
+            <Ionicons name={isFavourite ? 'heart' : 'heart-outline'} size={24} color={isFavourite ? 'red' : 'black'} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.productImageContainer}>
-          <Swiper
-            showsButtons={false}
-            autoplay={true}
-            loop={true}
-            autoplayTimeout={2.5}
-            style={styles.swiper}
-          >
+          <Swiper showsButtons={false} loop={false} style={styles.swiper} renderPagination={renderPagination}>
             {product.images.map((image, index) => (
               <View key={index} style={styles.slide}>
                 <Image source={{ uri: image.url }} style={styles.productImage} />
@@ -121,68 +160,122 @@ const ProductDetail = ({ navigation, route }) => {
         </View>
 
         <View style={styles.productInfoContainer}>
-          <Text style={styles.bestSeller}>{product.tags.toUpperCase()}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignContent: 'center' }}>
+            <Text style={styles.bestSeller}>{product.tags.toUpperCase()}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignContent: 'center' }}>
+              <Text style={{ color: '#000', fontWeight: '600' }}>Đã bán: </Text>
+              <Text style={{ color: '#000', fontWeight: '600' }}>{product.sold}</Text>
+            </View>
+          </View>
+
           <Text style={styles.productName}>{product.title}</Text>
           <Text style={styles.productPrice}>{formatPrice(product.price)} VND</Text>
           <Text style={styles.productDescription}>{product.description}</Text>
 
-          <Text style={styles.sectionTitle}>Size</Text>
-          <View style={styles.sizeContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {product.size.map((size) => (
-                <TouchableOpacity
-                  key={size}
-                  style={[
-                    styles.sizeButton,
-                    selectedSize === size && styles.selectedSizeButton,
-                  ]}
-                  onPress={() => handleSizePress(size)}
-                >
-                  <Text
-                    style={[
-                      styles.sizeText,
-                      selectedSize === size && styles.selectedSizeText,
-                    ]}
-                  >
-                    {size}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.sectionTitle}>Reviews</Text>
-            <StarRating
-              rating={parseFloat(product.totalrating)}
-              onChange={() => { }}
-              starSize={15}
-              style={styles.starRating}
-              readOnly={true}
-            />
-          </View>
-
-          {product.ratings.map((rating, index) => (
-            <View key={index} style={styles.reviewContainer}>
-              <StarRating
-                rating={rating.star}
-                onChange={() => { }}
-                starSize={20}
-                style={styles.starRating}
-                readOnly={true}
-              />
-              <Text style={styles.reviewComment}>{rating.comment}</Text>
+          <View>
+            <Text style={styles.sectionTitle}>Đánh giá sản phẩm</Text>
+            <View style={styles.ratingContainer}>
+              <StarRating rating={parseFloat(product.totalrating)} onChange={() => {}} starSize={17} readOnly={true} containerStyle={styles.starRating} />
+              <Text style={styles.totalRatingText}>{product.totalrating}/5</Text>
             </View>
-          ))}
+
+            {product.ratings.map((rating, index) => (
+              <View key={index} style={styles.reviewContainer}>
+                <StarRating rating={rating.star} onChange={() => {}} starSize={20} readOnly={true} containerStyle={styles.starRating} />
+                <Text style={styles.reviewComment}>{rating.comment}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
 
       <View style={styles.priceAddToCartContainer}>
-        <Text style={styles.priceText}>{formattedPrice}</Text>
-        <TouchableOpacity style={styles.addToCartButton}>
-          <Text style={styles.addToCartText}>Add To Cart</Text>
+        <Pressable style={styles.chatButton}>
+          <Ionicons name="chatbubble-outline" size={24} color="#fff" />
+        </Pressable>
+        <View style={styles.verticalDivider} />
+        <Pressable style={styles.addToCartButton} onPress={() => { setAction('add'); setModalVisible(true); }}>
+          <Ionicons name="cart-outline" size={24} color="#fff" />
+        </Pressable>
+        <View style={styles.verticalDivider} />
+        <TouchableOpacity style={styles.buyNowButton} onPress={() => { setAction('buy'); setModalVisible(true); }}>
+          <Text style={styles.buyNowText}>Mua ngay</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal */}
+      <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => { setModalVisible(!modalVisible); }}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <View style={{ flexDirection: 'row' }}>
+              <View style={{ borderWidth: 0.5, borderColor: '#E0E0E0', padding: 5, borderRadius: 10 }}>
+                <Image source={{ uri: getImageForColor(selectedColor) }} style={styles.modalImage} />
+              </View>
+
+              <View style={{ flex: 1, flexDirection: 'column', justifyContent: 'space-between' }}>
+                <TouchableOpacity style={styles.closeButton} onPress={() => { 
+                  setModalVisible(!modalVisible); 
+                  resetSelections();
+                }}>
+                  <Ionicons name="close" size={24} color="black" />
+                </TouchableOpacity>
+
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={styles.modalPrice}>{formatPrice(product.price)} VND</Text>
+                  <Text style={styles.modalStock}>Kho: {product.quantity}</Text>
+                </View>
+              </View>
+            </View>
+
+            <Text style={[styles.modalText, { marginTop: 20 }]}>Màu sắc</Text>
+            <FlatList data={product.color} horizontal renderItem={({ item }) => (
+              <Pressable style={[styles.colorOption, { backgroundColor: item === selectedColor ? '#2196F3' : 'white' }]} onPress={() => setSelectedColor(item)}>
+                <Text style={{ color: item === selectedColor ? 'white' : 'black' }}>{item}</Text>
+              </Pressable>
+            )} keyExtractor={item => item} />
+
+            <Text style={[styles.modalText, { marginTop: 20 }]}>Size</Text>
+            <FlatList data={product.size} horizontal renderItem={({ item }) => (
+              <Pressable 
+                style={[styles.sizeOption, { backgroundColor: item === selectedSize ? '#2196F3' : 'white', borderColor: selectedColor ? '#ccc' : '#E0E0E0' }]} 
+                onPress={() => selectedColor && setSelectedSize(item)}
+                disabled={!selectedColor}
+              >
+                <Text style={{ color: item === selectedSize ? 'white' : 'black' }}>{item}</Text>
+              </Pressable>
+            )} keyExtractor={item => item} />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignContent: 'center', marginTop: 20 }}>
+              <Text style={[styles.modalText]}>Số lượng</Text>
+              <QuantitySelector quantity={quantity} setQuantity={setQuantity} enabled={selectedColor && selectedSize} />
+            </View>
+
+            <Pressable
+              style={[styles.button, 
+                { 
+                  backgroundColor: selectedColor && selectedSize ? '#2196F3' : 'white', 
+                  borderColor: selectedColor && selectedSize ? '#2196F3' : '#E0E0E0', 
+                  borderWidth: 1, 
+                  marginTop: 20 
+                }
+              ]}
+              onPress={() => { 
+                if (action === 'add') {
+                  handleAddToCart();
+                } else if (action === 'buy') {
+                  // Handle buy now logic here
+                  // You might want to add similar logic as handleAddToCart but with immediate checkout
+                }
+              }}
+              disabled={!selectedColor || !selectedSize}
+            >
+              <Text style={{ color: selectedColor && selectedSize ? 'white' : 'black', fontWeight: 'bold', textAlign: 'center' }}>
+                {action === 'buy' ? 'Mua ngay' : 'Thêm vào giỏ hàng'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -193,7 +286,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   scrollContent: {
-    paddingBottom: 70,
+    flexGrow: 1,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -260,7 +353,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000',
+    color: 'red',
     marginBottom: 10,
   },
   productDescription: {
@@ -274,31 +367,17 @@ const styles = StyleSheet.create({
     color: '#0D163A',
     marginBottom: 10,
   },
-  sizeContainer: {
+  ratingContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
-  },
-  sizeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f1f1f1',
-    marginRight: 10,
+    marginBottom: 10,
   },
-  selectedSizeButton: {
-    backgroundColor: '#007BFF',
-  },
-  sizeText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  selectedSizeText: {
-    color: '#fff',
+  totalRatingText: {
+    marginLeft: 8,
+    color: 'red',
   },
   starRating: {
-    marginBottom: 10,
+    marginHorizontal: 1,
   },
   reviewContainer: {
     marginBottom: 10,
@@ -311,8 +390,6 @@ const styles = StyleSheet.create({
   },
   priceAddToCartContainer: {
     elevation: 5,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -320,24 +397,38 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
-    padding: 15,
+    backgroundColor: '#007BFF',
   },
-  priceText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
+  chatButton: {
+    backgroundColor: '#00C853',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
   },
   addToCartButton: {
-    backgroundColor: '#007BFF',
-    borderRadius: 20,
-    paddingVertical: 13,
-    paddingHorizontal: 20,
+    backgroundColor: '#00C853',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
   },
-  addToCartText: {
+  buyNowButton: {
+    backgroundColor: '#007BFF',
+    flex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  buyNowText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  verticalDivider: {
+    width: 1,
+    backgroundColor: '#E0E0E0',
+    height: '100%',
   },
   loadingContainer: {
     flex: 1,
@@ -348,6 +439,87 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  paginationStyle: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  paginationText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  centeredView: {
+    justifyContent: 'flex-end',
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+  },
+  modalImage: {
+    width: 100,
+    height: 100,
+    resizeMode: 'contain',
+  },
+  modalPrice: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'red',
+    marginBottom: 10,
+  },
+  modalStock: {
+    fontSize: 16,
+    color: '#333',
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0D163A',
+    marginBottom: 10,
+  },
+  colorOption: {
+    padding: 10,
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  sizeOption: {
+    padding: 10,
+    margin: 5,
+    borderWidth: 1,
+    borderRadius: 5,
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonClose: {
+    backgroundColor: '#2196F3',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

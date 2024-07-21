@@ -23,7 +23,7 @@ const Home = ({ navigation }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://192.168.0.149:5000/api/brand/');
+        const response = await axios.get('http://192.168.0.149:3000/api/brand/');
         const formattedCategories = response.data.map(cat => ({
           name: cat.title,
           image: { uri: cat.image },
@@ -43,8 +43,8 @@ const Home = ({ navigation }) => {
       const fetchProducts = async () => {
         try {
           const [popularResponse, newArrivalResponse] = await Promise.all([
-            axios.get(`http://192.168.0.149:5000/api/product/tag/${activeCategory}/popular`),
-            axios.get(`http://192.168.0.149:5000/api/product/tag/${activeCategory}/new-arrivals`),
+            axios.get(`http://192.168.0.149:3000/api/product/tag/${activeCategory}/popular`),
+            axios.get(`http://192.168.0.149:3000/api/product/tag/${activeCategory}/new-arrivals`),
           ]);
 
           const formatProducts = (products) =>
@@ -97,101 +97,116 @@ const Home = ({ navigation }) => {
   };
 
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="grid-outline" size={24} color="black" />
+    <View style={styles.outerContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="grid-outline" size={24} color="black" />
+            </View>
+            <View style={styles.locationContainer}>
+              <Text style={styles.storeLocationText}>Store location</Text>
+              <View style={styles.location}>
+                <Ionicons name="location-sharp" size={16} color="red" />
+                <Text style={styles.locationText}>Mondolibug, Sylhet</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.iconContainer} onPress={handleNotification}>
+              <Ionicons name="notifications-outline" size={24} color="black" />
+              <View style={styles.notificationDot} />
+            </TouchableOpacity>
           </View>
-          <View style={styles.locationContainer}>
-            <Text style={styles.storeLocationText}>Store location</Text>
-            <View style={styles.location}>
-              <Ionicons name="location-sharp" size={16} color="red" />
-              <Text style={styles.locationText}>Mondolibug, Sylhet</Text>
+
+          {/* search */}
+          <SearchBar onPress={handleSearch} />
+
+          {/* categories */}
+          <View style={styles.categoryContainer}>
+            <View style={styles.scrollContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {categories.map(cat => {
+                  if (cat.name === activeCategory) {
+                    return (
+                      <GradientButton
+                        key={cat.name}
+                        containerStyle={styles.buttonContainer}
+                        value={cat.name}
+                        image={cat.image}
+                        onPress={() => setActiveCategory(cat.name)}>
+                        <Image source={cat.image} style={styles.image} />
+                        <Text style={styles.text}>{cat.name}</Text>
+                      </GradientButton>
+                    );
+                  } else {
+                    return (
+                      <TouchableOpacity
+                        onPress={() => setActiveCategory(cat.name)}
+                        key={cat.name}
+                        style={styles.normalButton}>
+                        <Image source={cat.image} style={styles.image} />
+                      </TouchableOpacity>
+                    );
+                  }
+                })}
+              </ScrollView>
             </View>
           </View>
-          <TouchableOpacity style={styles.iconContainer} onPress={handleNotification}>
-            <Ionicons name="notifications-outline" size={24} color="black" />
-            <View style={styles.notificationDot} />
-          </TouchableOpacity>
-        </View>
 
-        {/* search */}
-        <SearchBar onPress={handleSearch} />
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>Popular Shoes</Text>
+            <TouchableOpacity onPress={handlePopular}>
+              <Text style={styles.seeAll}>See all</Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* categories */}
-        <View style={styles.categoryContainer}>
-          <View style={styles.scrollContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {categories.map(cat => {
-                if (cat.name === activeCategory) {
-                  return (
-                    <GradientButton
-                      key={cat.name}
-                      containerStyle={styles.buttonContainer}
-                      value={cat.name}
-                      image={cat.image}
-                      onPress={() => setActiveCategory(cat.name)}>
-                      <Image source={cat.image} style={styles.image} />
-                      <Text style={styles.text}>{cat.name}</Text>
-                    </GradientButton>
-                  );
-                } else {
-                  return (
-                    <TouchableOpacity
-                      onPress={() => setActiveCategory(cat.name)}
-                      key={cat.name}
-                      style={styles.normalButton}>
-                      <Image source={cat.image} style={styles.image} />
-                    </TouchableOpacity>
-                  );
-                }
-              })}
-            </ScrollView>
+          {/* Product Cards Popular */}
+          <View style={{ marginLeft: 25, marginTop: 10 }}>
+            {popularProducts.length === 0 ? (
+              <Text style={styles.noProductsText}>Hiện tại chưa tìm thấy sản phẩm</Text>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {popularProducts.map((product, index) => (
+                  <ProductCardPopular key={index} product={product} onPress={() => handleItemProduct(product.id)} />
+                ))}
+              </ScrollView>
+            )}
+          </View>
+
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>New Arrivals</Text>
+            <TouchableOpacity onPress={handleArrival}>
+              <Text style={styles.seeAll}>See all</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Product Cards Arrival */}
+          <View style={{ marginLeft: 25, marginTop: 10, marginBottom: 20 }}>
+            {newArrivalProducts.length === 0 ? (
+              <Text style={styles.noProductsText}>Hiện tại chưa tìm thấy sản phẩm</Text>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {newArrivalProducts.map((product, index) => (
+                  <ProductCardArrival key={index} product={product} onPress={() => handleItemProduct(product.id)} />
+                ))}
+              </ScrollView>
+            )}
           </View>
         </View>
-
-        <View style={styles.headerContainer}>
-          <Text style={styles.title}>Popular Shoes</Text>
-          <TouchableOpacity onPress={handlePopular}>
-            <Text style={styles.seeAll}>See all</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Product Cards Popular */}
-        <View style={{ marginLeft: 25, marginTop: 10 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {popularProducts.map((product, index) => (
-              <ProductCardPopular key={index} product={product} onPress={() => handleItemProduct(product.id)} />
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.headerContainer}>
-          <Text style={styles.title}>New Arrivals</Text>
-          <TouchableOpacity onPress={handleArrival}>
-            <Text style={styles.seeAll}>See all</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Product Cards Arrival */}
-        <View style={{ marginLeft: 25, marginTop: 10, marginBottom: 20 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {newArrivalProducts.map((product, index) => (
-              <ProductCardArrival key={index} product={product} onPress={() => handleItemProduct(product.id)} />
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-    marginBottom: 20,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  container: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -250,9 +265,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '500',
   },
-  scrollContainer: {
-    paddingTop: 10,
-  },
+  scrollContainer: {},
   buttonContainer: {
     marginRight: 8,
     alignItems: 'center',
@@ -261,15 +274,15 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   normalButton: {
-    backgroundColor: '#FFFFFF',
-    padding: 10,
-    borderRadius: 50,
-    marginRight: 18,
-    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius:50,
+    padding:15,
+    marginRight: 20,
+    justifyContent:'center'
   },
   image: {
-    width: 35,
-    height: 35,
+    width: 30,
+    height: 30,
   },
   text: {
     color: 'white',
@@ -290,6 +303,12 @@ const styles = StyleSheet.create({
   seeAll: {
     fontSize: 16,
     color: '#007BFF',
+  },
+  noProductsText: {
+    color: '#888',
+    fontSize: 16,
+    marginLeft: 25,
+    marginTop: 10,
   },
 });
 
