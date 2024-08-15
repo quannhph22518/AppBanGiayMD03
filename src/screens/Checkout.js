@@ -1,124 +1,307 @@
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 import {
   StyleSheet,
   Text,
   View,
   TextInput,
-  Image,
-  Button,
   TouchableOpacity,
   ScrollView,
   Modal,
+  Image,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useFocusEffect} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {AppContext} from '../ultils/AppContext';
 
-const Checkout = () => {
-  const [email, setEmail] = useState('rumenhussen@gmail.com');
-  const [phone, setPhone] = useState('+88-692-764-269');
-  const [address, setAddress] = useState('Newahall St 36, London, 12908 - UK');
-  const handleEmailChange = text => {
-    setEmail(text);
+const Checkout = ({route, navigation}) => {
+  const {token} = useContext(AppContext);
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [firstname, setFirstname] = useState('');
+  const [lastname, setLastname] = useState('');
+
+  const [isAddingAddress, setIsAddingAddress] = useState(false); // Trạng thái để theo dõi khi thêm địa chỉ
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  const {checkoutData = []} = route.params || {};
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadUserInfo = async () => {
+        const storedEmail = await AsyncStorage.getItem('email');
+        const storedPhone = await AsyncStorage.getItem('mobile');
+        const storedAddress = await AsyncStorage.getItem('address');
+        const storedFirstname = await AsyncStorage.getItem('firstname');
+        const storedLastname = await AsyncStorage.getItem('lastname');
+
+        if (storedEmail) setEmail(storedEmail);
+        if (storedPhone) setPhone(storedPhone);
+        if (storedAddress) setAddress(storedAddress);
+        if (storedFirstname) setFirstname(storedFirstname);
+        if (storedLastname) setLastname(storedLastname);
+      };
+
+      loadUserInfo();
+
+      return () => {};
+    }, []),
+  );
+
+  const handleSaveAddress = async () => {
+    try {
+      const response = await fetch(
+        'http://192.168.0.149:3000/api/user/save-address',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            address: address,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save address!');
+      }
+
+      const data = await response.json();
+      console.log('Address saved successfully:', data);
+
+      await AsyncStorage.setItem('address', address); // Lưu vào bộ nhớ
+
+      setIsAddingAddress(false); // Ẩn trường nhập liệu sau khi lưu thành công
+
+      Alert.alert('Thành công', 'Địa chỉ đã được lưu thành công!');
+    } catch (error) {
+      console.error('Saving address failed:', error);
+      Alert.alert('Lỗi', 'Lưu địa chỉ thất bại: ' + error.message);
+    }
   };
 
-  const handlePhoneChange = text => {
-    setPhone(text);
+  const handleCheckout = async () => {
+    if (!address || address.length < 8) {
+      alert('Vui lòng nhập địa chỉ với ít nhất 8 ký tự trước khi thanh toán.');
+      return;
+    }
+  
+    const products = checkoutData.map(item => ({
+      product: item.productId,
+      count: item.count,
+      color: item.color,
+    }));
+  
+    try {
+      const response = await fetch(
+        'http://192.168.0.149:3000/api/payment/cash',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            products,
+            orderStatus: 'Not Processed',
+            address: address,
+            totalAmount: calculateTotalCost(),
+            phone: phone,
+          }),
+        },
+      );
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Something went wrong!');
+      }
+  
+      const data = await response.json();
+      console.log('Payment successful:', data);
+  
+      setModalVisible(true);
+    } catch (error) {
+      console.error('Payment failed:', error);
+      alert('Thanh toán thất bại: ' + error.message);
+    }
   };
-  const handleAddressChange = text => {
-    setAddress(text);
-  };
-  const handleCheckout = () => {
-    setModalVisible(true);
-  };
-
+  
   const closeModal = () => {
     setModalVisible(false);
+    navigation.navigate('Home');
   };
-  const [isModalVisible, setModalVisible] = useState(false);
+
+  const formatCurrency = price => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const calculateTotalCost = () => {
+    const productTotal = checkoutData.reduce(
+      (total, item) => total + item.price * item.count,
+      0,
+    );
+    return productTotal + 40900; // Phí vận chuyển
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.topSection}>
-        <Text style={styles.header}>Checkout</Text>
+    <ScrollView>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity
+          style={styles.iconContainer}
+          onPress={() => {
+            navigation.goBack();
+          }}>
+          <Ionicons name="chevron-back-outline" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Thanh toán</Text>
+      </View>
+      <View style={styles.container}>
+        <View style={styles.topSection}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Thông Tin Liên Hệ</Text>
+            <View style={styles.infoItem}>
+              <Icon name="user" size={20} color="#000" />
+              <Text style={styles.input}>
+                {firstname} {lastname}
+              </Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Icon name="envelope" size={20} color="#000" />
+              <TextInput
+                style={styles.input}
+                value={email}
+                autoCapitalize="none"
+              />
+            </View>
+            <View style={styles.infoItem}>
+              <Icon name="phone" size={20} color="#000" />
+              <TextInput
+                style={styles.input}
+                value={phone}
+                autoCapitalize="none"
+              />
+            </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
-          <View style={styles.infoItem}>
-            <Icon name="envelope" size={20} color="#000" />
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={handleEmailChange}
-              autoCapitalize="none"
-            />
-          </View>
-          <View style={styles.infoItem}>
-            <Icon name="phone" size={20} color="#000" />
-            <TextInput
-              style={styles.input}
-              value={phone}
-              onChangeText={handlePhoneChange}
-              autoCapitalize="none"
-            />
-          </View>
-
-          <Text style={styles.sectionTitle}>Address</Text>
-          <View style={styles.addressContainer}>
-            <TextInput
-              style={styles.input}
-              value={address}
-              onChangeText={handleAddressChange}
-            />
-          </View>
-
-          <Text style={styles.sectionTitle}>Payment Method</Text>
-          <View style={styles.paymentContainer}>
-            <Icon name="cc-paypal" size={40} color="#003087" />
-            <View>
-              <Text style={styles.paymentInfo}>Paypal Card</Text>
-              <Text style={styles.paymentInfo}>**** **** **** 4629</Text>
+            <View style={styles.infoItem}>
+              <Ionicons name="location-outline" size={20} color="#000" />
+              {address && address.length >= 3 && !isAddingAddress ? (
+                <>
+                  <Text style={styles.input}>{address}</Text>
+                  <TouchableOpacity
+                    style={styles.addAddressButton}
+                    onPress={() => setIsAddingAddress(true)}>
+                    <Text style={styles.addAddressText}>Chỉnh sửa địa chỉ</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Nhập địa chỉ của bạn"
+                    value={address}
+                    onChangeText={text => setAddress(text)}
+                  />
+                  <TouchableOpacity
+                    style={styles.saveButton}
+                    onPress={handleSaveAddress}>
+                    <Text style={styles.saveButtonText}>Lưu</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.bottomSection}>
         <View style={styles.section}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.label}>Subtotal</Text>
-            <Text style={styles.info}>$1250.00</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.label}>Shipping</Text>
-            <Text style={styles.info}>$40.90</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.label}>Total Cost</Text>
-            <Text style={styles.totalCost}>$1690.99</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.paymentButton}
-            onPress={handleCheckout}>
-            <Text style={styles.paymentButtonText}>Payment</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Thông Tin Sản Phẩm</Text>
+          {checkoutData.map((item, index) => (
+            <View key={index} style={styles.cartItem}>
+              <Image source={item.image} style={styles.productImage} />
+              <View style={[styles.info, {marginLeft: 30}]}>
+                <Text style={styles.itemTitle} numberOfLines={2}>
+                  {item.name}
+                </Text>
+                <Text style={styles.price}>
+                  {formatCurrency(item.price)} VND
+                </Text>
+                <View style={{flexDirection: 'row'}}>
+                  <Text style={[styles.color, {marginRight: 30}]}>
+                    Màu sắc: {item.color}
+                  </Text>
+                  <Text style={styles.color}>Số lượng: {item.count}</Text>
+                </View>
+              </View>
+            </View>
+          ))}
         </View>
-      </View>
-      <Modal
-        transparent={true}
-        animationType="slide"
-        visible={isModalVisible}
-        onRequestClose={closeModal}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Image
-              source={require('../images/thanhcong.jpg')}
-              style={styles.modalImage}
-            />
-            <Text style={styles.modalMessage}>Your Payment Is Successful</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
-              <Text style={styles.modalButtonText}>Back To Shopping</Text>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Phương Thức Thanh Toán</Text>
+          <View style={styles.paymentMethod}>
+            <Icon name="money" size={20} color="#000" />
+            <Text style={styles.paymentText}>
+              Thanh toán khi nhận hàng (COD)
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.bottomSection}>
+          <View style={styles.section}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.label}>Tổng phụ</Text>
+              <Text style={styles.info}>
+                {formatCurrency(
+                  checkoutData.reduce(
+                    (total, item) => total + item.price * item.count,
+                    0,
+                  ),
+                )}{' '}
+                VND
+              </Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={styles.label}>Phí Vận Chuyển</Text>
+              <Text style={styles.info}>40,900 VND</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={styles.label}>Tổng Chi Phí</Text>
+              <Text style={styles.totalCost}>
+                {formatCurrency(calculateTotalCost())} VND
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.paymentButton}
+              onPress={handleCheckout}>
+              <Text style={styles.paymentButtonText}>Thanh Toán</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={isModalVisible}
+          onRequestClose={closeModal}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Image
+                source={require('../images/thanhcong.jpg')}
+                style={styles.modalImage}
+              />
+              <Text style={styles.modalMessage}>Thanh toán thành công</Text>
+              <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
+                <Text style={styles.modalButtonText}>Quay lại mua sắm</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </View>
     </ScrollView>
   );
 };
@@ -131,18 +314,40 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#f0f2f5',
   },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    position: 'relative',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '500',
+    color: '#0D163A',
+    position: 'absolute',
+    left: '50%',
+    transform: [{translateX: -75}],
+  },
   topSection: {
     flex: 3,
   },
   bottomSection: {
     flex: 1,
     marginTop: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
   },
   section: {
     marginBottom: 20,
@@ -173,25 +378,39 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ddd',
     flex: 1,
   },
-  addressContainer: {
+  addAddressButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addAddressText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  saveButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#28a745',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  paymentMethod: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 10,
   },
-  map: {
-    width: 100,
-    height: 100,
+  paymentText: {
     marginLeft: 10,
-  },
-  paymentContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  paymentInfo: {
     fontSize: 16,
     color: '#333',
-    marginLeft: 10,
-    marginBottom: 20,
   },
   summaryItem: {
     flexDirection: 'row',
@@ -252,6 +471,38 @@ const styles = StyleSheet.create({
   },
   modalButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  productImage: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+    marginBottom: 10,
+  },
+  cartItem: {
+    flexDirection: 'row',
+    padding: 5,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  price: {
+    fontSize: 16,
+    color: 'red',
+    marginBottom: 5,
+  },
+  color: {
+    fontSize: 14,
+    color: '#555',
+  },
+  quantity: {
     fontSize: 16,
     fontWeight: 'bold',
   },

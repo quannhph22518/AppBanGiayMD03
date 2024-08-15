@@ -30,7 +30,7 @@ const MyCart = ({ navigation }) => {
 
   const fetchCart = async () => {
     try {
-      const response = await fetch('http://192.168.26.7:5000/api/user/cart', {
+      const response = await fetch('http://192.168.0.149:3000/api/user/cart', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -116,11 +116,30 @@ const MyCart = ({ navigation }) => {
 
   const toggleCheckBox = id => {
     setItems(prevItems =>
-prevItems.map(item =>
+      prevItems.map(item =>
         item.id === id ? { ...item, checked: !item.checked } : item,
       ),
     );
   };
+
+  const handleCheckout = () => {
+    const checkoutData = items.filter(item => item.checked).map(item => ({
+      productId: item.id,
+      image: item.image,
+      name: item.title,
+      price: item.price,
+      color: item.color,
+      count: item.quantity,
+    }));
+  
+    if (checkoutData.length > 0) {
+      navigation.navigate('Checkout1', { checkoutData });
+      // console.log('Navigating to Checkout with data:', checkoutData);
+    } else {
+      ToastAndroid.show('Vui lòng chọn ít nhất một sản phẩm để thanh toán', ToastAndroid.SHORT);
+    }
+  };
+  
 
   const renderItem = ({ item }) => (
     <View style={styles.cartItem}>
@@ -204,7 +223,7 @@ prevItems.map(item =>
           <Text>Tổng cộng</Text>
           <Text>{formatCurrency(total)}</Text>
         </View>
-        <TouchableOpacity style={styles.checkoutButton}>
+        <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
           <Text style={styles.checkoutButtonText}>Thanh toán</Text>
         </TouchableOpacity>
       </View>
@@ -216,7 +235,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-backgroundColor: '#f8f9fa',
+    backgroundColor: '#f8f9fa',
   },
   emptyContainer: {
     flex: 1,
