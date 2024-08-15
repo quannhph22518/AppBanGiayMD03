@@ -23,7 +23,7 @@ const Home = ({ navigation }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://192.168.26.7:5000/api/brand/');
+        const response = await axios.get('http://192.168.0.149:3000/api/brand/');
         const formattedCategories = response.data.map(cat => ({
           name: cat.title,
           image: { uri: cat.image },
@@ -43,8 +43,8 @@ const Home = ({ navigation }) => {
       const fetchProducts = async () => {
         try {
           const [popularResponse, newArrivalResponse] = await Promise.all([
-            axios.get(`http://192.168.26.7:5000/api/product/tag/${activeCategory}/popular`),
-            axios.get(`http://192.168.26.7:5000/api/product/tag/${activeCategory}/new-arrivals`),
+            axios.get(`http://192.168.0.149:3000/api/product/tag/${activeCategory}/popular`),
+            axios.get(`http://192.168.0.149:3000/api/product/tag/${activeCategory}/new-arrivals`),
           ]);
 
           const formatProducts = (products) =>
