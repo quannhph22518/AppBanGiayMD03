@@ -23,6 +23,7 @@ import ProductAll from '../screens/ProductAll';
 import ForgotPass from '../screens/PassW';
 import Login from '../screens/Login';
 import Signup from '../screens/Signup';
+import Checkout from '../screens/Checkout';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -46,6 +47,7 @@ const HomeStack = () => {
       <Stack.Screen name="ProductDetail" component={ProductDetail} />
       <Stack.Screen name="ProductAll" component={ProductAll} />
       <Stack.Screen name="User" component={User} />
+      <Stack.Screen name="Checkout1" component={Checkout} />
     </Stack.Navigator>
   );
 };
@@ -60,11 +62,22 @@ const FavouriteStack = () => {
   );
 };
 
+const MyCartStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }} >
+      <Stack.Screen name="MyCartt" component={MyCart} />
+      <Stack.Screen name="User" component={User} />
+      <Stack.Screen name="Checkout1" component={Checkout} />
+    </Stack.Navigator>
+  );
+};
+
 const getTabBarVisibility = route => {
   const routeName = getFocusedRouteNameFromRoute(route) ?? '';
 
   if (
     routeName === 'Notifications' ||
+    routeName === 'Checkout1' ||
     routeName === 'Search' ||
     routeName === 'ProductDetail' ||
     routeName === 'ProductAll' ||
@@ -123,7 +136,7 @@ const Main = () => {
       >
         <Tab.Screen name="Homee" component={HomeStack} />
         <Tab.Screen name="Favourite" component={FavouriteStack} />
-        <Tab.Screen name="MyCart" component={MyCart} />
+        <Tab.Screen name="MyCart" component={MyCartStack} />
         <Tab.Screen name="NotificationsScreen" component={NotificationsScreen} />
         <Tab.Screen name="Settings" component={Settings} />
       </Tab.Navigator>
