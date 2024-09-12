@@ -48,7 +48,7 @@ const ProductDetail = ({ navigation, route }) => {
         setLoading(true);
         try {
           const response = await axios.get(
-            `http://192.168.10.106:3000/api/product/${id}`
+            `http://192.168.1.9:3000/api/product/${id}`
           );
           setProduct(response.data);
           setLoading(false);
@@ -80,7 +80,7 @@ const ProductDetail = ({ navigation, route }) => {
     } else {
       try {
         const response = await axios.put(
-          'http://192.168.10.106:3000/api/product/wishlist',
+          'http://192.168.1.9:3000/api/product/wishlist',
           {
             _id: userId,
             prodId: product._id,
@@ -113,7 +113,7 @@ const ProductDetail = ({ navigation, route }) => {
 
     try {
       const response = await axios.post(
-        'http://192.168.10.106:3000/api/user/cart',
+        'http://192.168.1.9:3000/api/user/cart',
         { cart: [cartItem] },
         {
           headers: {

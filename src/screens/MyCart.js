@@ -1,4 +1,4 @@
-import React, { useState, useContext, useCallback } from 'react';
+import React, {useState, useContext, useCallback} from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,16 +8,19 @@ import {
   FlatList,
   Button,
   ToastAndroid,
-  Alert
+  Alert,
 } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
-import { AppContext } from '../ultils/AppContext';
-import { useFocusEffect } from '@react-navigation/native';
+import {AppContext} from '../ultils/AppContext';
+import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const MyCart = ({ navigation }) => {
-  const { isCheckLogin, token } = useContext(AppContext);
+const MyCart = ({navigation}) => {
+  const {isCheckLogin, token} = useContext(AppContext);
   const [items, setItems] = useState([]);
+  const [cartTotal, setCartTotal] = useState();
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -25,29 +28,31 @@ const MyCart = ({ navigation }) => {
       if (isCheckLogin) {
         fetchCart();
       }
-    }, [isCheckLogin])
+    }, [isCheckLogin]),
   );
 
   const fetchCart = async () => {
     try {
-      const response = await fetch('http://192.168.10.106:3000/api/user/cart', {
+      const response = await fetch('http://192.168.1.9:3000/api/user/cart', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-
       const data = await response.json();
+      console.log(data);
+
       if (data === null || !data.products) {
         setItems([]);
       } else {
+        setCartTotal(data.cartTotal);
         const cartItems = data.products.map(item => ({
           id: item.product._id,
-          image: { uri: item.product.images[0].url },
+          image: {uri: item.product.images[0].url},
           title: item.product.title,
           price: item.price,
           color: item.color,
@@ -64,21 +69,25 @@ const MyCart = ({ navigation }) => {
     }
   };
 
-  const formatCurrency = (value) => {
-    return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  const formatCurrency = value => {
+    return value.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'});
   };
 
-  const subtotal = items.reduce(
-    (sum, item) => sum + (item.checked ? item.price * item.quantity : 0),
-    0,
-  );
-  const shipping = items.some(item => item.checked) ? 40900 : 0;
-  const total = subtotal + shipping;
+  function toalMoney() {
+    const shippingFee = items.some(item => item.checked) ? 40900 : 0;
+    const subtotal = items.reduce(
+      (sum, item) => sum + (item.checked ? item.price * item.quantity : 0),
+      0,
+    );
+    return shippingFee + subtotal;
+  }
+
+  // const total = subtotal + shipping;
 
   const incrementQuantity = id => {
     setItems(prevItems =>
       prevItems.map(item =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item,
+        item.id === id ? {...item, quantity: item.quantity + 1} : item,
       ),
     );
   };
@@ -87,61 +96,84 @@ const MyCart = ({ navigation }) => {
     setItems(prevItems =>
       prevItems.map(item =>
         item.id === id && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 } : item,
+          ? {...item, quantity: item.quantity - 1}
+          : item,
       ),
     );
   };
 
   const confirmRemoveItem = id => {
     Alert.alert(
-      "Xác nhận",
-      "Bạn có chắc chắn muốn xóa sản phẩm này?",
+      'Xác nhận',
+      'Bạn có chắc chắn muốn xóa sản phẩm này?',
       [
         {
-          text: "Không",
-          style: "cancel"
+          text: 'Không',
+          style: 'cancel',
         },
         {
-          text: "Có",
-          onPress: () => removeItem(id)
-        }
+          text: 'Có',
+          onPress: () => removeItem(id),
+        },
       ],
-      { cancelable: false }
+      {cancelable: false},
     );
   };
 
-  const removeItem = id => {
+  const removeItem = async id => {
     setItems(prevItems => prevItems.filter(item => item.id !== id));
+    const storedToken = await AsyncStorage.getItem('token');
+
+    try {
+      const response = await axios.delete(
+        'http://192.168.1.9:3000/api/user/remove-product',
+        {
+          data: {productId: id},
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const toggleCheckBox = id => {
     setItems(prevItems =>
       prevItems.map(item =>
-        item.id === id ? { ...item, checked: !item.checked } : item,
+        item.id === id ? {...item, checked: !item.checked} : item,
       ),
     );
   };
 
   const handleCheckout = () => {
-    const checkoutData = items.filter(item => item.checked).map(item => ({
-      productId: item.id,
-      image: item.image,
-      name: item.title,
-      price: item.price,
-      color: item.color,
-      count: item.quantity,
-    }));
-  
+    const checkoutData = items
+      .filter(item => item.checked)
+      .map(item => ({
+        productId: item.id,
+        image: item.image,
+        name: item.title,
+        price: item.price,
+        color: item.color,
+        count: item.quantity,
+      }));
+
     if (checkoutData.length > 0) {
-      navigation.navigate('Checkout1', { checkoutData });
+      navigation.navigate('Checkout1', {checkoutData});
       // console.log('Navigating to Checkout with data:', checkoutData);
     } else {
-      ToastAndroid.show('Vui lòng chọn ít nhất một sản phẩm để thanh toán', ToastAndroid.SHORT);
+      ToastAndroid.show(
+        'Vui lòng chọn ít nhất một sản phẩm để thanh toán',
+        ToastAndroid.SHORT,
+      );
     }
   };
-  
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({item}) => (
     <View style={styles.cartItem}>
       <CheckBox
         value={item.checked}
@@ -149,7 +181,9 @@ const MyCart = ({ navigation }) => {
       />
       <Image source={item.image} style={styles.image} />
       <View style={styles.info}>
-        <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.itemTitle} numberOfLines={2}>
+          {item.title}
+        </Text>
         <Text style={styles.price}>{formatCurrency(item.price)}</Text>
       </View>
       <View style={styles.quantityControls}>
@@ -176,7 +210,9 @@ const MyCart = ({ navigation }) => {
   if (!isCheckLogin) {
     return (
       <View style={styles.loginContainer}>
-        <Text style={styles.loginPrompt}>Bạn cần đăng nhập để sử dụng chức năng này.</Text>
+        <Text style={styles.loginPrompt}>
+          Bạn cần đăng nhập để sử dụng chức năng này.
+        </Text>
         <Button title="Đăng nhập" onPress={() => navigation.navigate('User')} />
       </View>
     );
@@ -213,17 +249,29 @@ const MyCart = ({ navigation }) => {
       <View style={styles.summary}>
         <View style={styles.summaryItem}>
           <Text>Tạm tính</Text>
-          <Text>{formatCurrency(subtotal)}</Text>
+          <Text>
+            {formatCurrency(
+              (subtotal = items.reduce(
+                (sum, item) =>
+                  sum + (item.checked ? item.price * item.quantity : 0),
+                0,
+              )),
+            )}
+          </Text>
         </View>
         <View style={styles.summaryItem}>
           <Text>Phí vận chuyển</Text>
-          <Text>{formatCurrency(shipping)}</Text>
+          <Text>
+            {formatCurrency(items.some(item => item.checked) ? 40900 : 0)}
+          </Text>
         </View>
         <View style={styles.summaryItem}>
           <Text>Tổng cộng</Text>
-          <Text>{formatCurrency(total)}</Text>
+          <Text>{formatCurrency(toalMoney())}</Text>
         </View>
-        <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+        <TouchableOpacity
+          style={styles.checkoutButton}
+          onPress={handleCheckout}>
           <Text style={styles.checkoutButtonText}>Thanh toán</Text>
         </TouchableOpacity>
       </View>
@@ -256,7 +304,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
@@ -266,7 +314,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 10,
     marginRight: 20,
-    resizeMode: 'contain'
+    resizeMode: 'contain',
   },
   info: {
     flex: 1,

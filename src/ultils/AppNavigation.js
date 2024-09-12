@@ -24,6 +24,7 @@ import ForgotPass from '../screens/PassW';
 import Login from '../screens/Login';
 import Signup from '../screens/Signup';
 import Checkout from '../screens/Checkout';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import History from '../screens/History';
 
 const Tab = createBottomTabNavigator();
@@ -76,6 +77,7 @@ const MySettingStack = () => {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="Settingss" component={Settings} />
+      <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
       <Stack.Screen name="History" component={History} />
     </Stack.Navigator>
   );
@@ -91,6 +93,7 @@ const getTabBarVisibility = route => {
     routeName === 'ProductDetail' ||
     routeName === 'ProductAll' ||
     routeName === 'User' ||
+    routeName === 'EditProfileScreen'||
     routeName === 'History'
   ) {
     return 'none';

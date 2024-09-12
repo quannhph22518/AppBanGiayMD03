@@ -16,7 +16,7 @@ const History = ({navigation}) => {
     };
     try {
       const response = await axios.get(
-        'http://192.168.10.106:3000/api/static/order-history',
+        'http://192.168.1.9:3000/api/static/order-history',
         config,
       );
       if (response.status === 200) {
