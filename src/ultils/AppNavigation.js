@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, {useState, useEffect, useContext} from 'react';
+import {StyleSheet, View} from 'react-native';
 import {
   NavigationContainer,
   getFocusedRouteNameFromRoute,
 } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
-import { AppProvider, AppContext } from '../ultils/AppContext';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createStackNavigator} from '@react-navigation/stack';
+import {AppProvider, AppContext} from '../ultils/AppContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Home from '../screens/Home';
@@ -24,13 +24,14 @@ import ForgotPass from '../screens/PassW';
 import Login from '../screens/Login';
 import Signup from '../screens/Signup';
 import Checkout from '../screens/Checkout';
+import History from '../screens/History';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 const User = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Register" component={Signup} />
       <Stack.Screen name="ForgotPass" component={ForgotPass} />
@@ -40,7 +41,7 @@ const User = () => {
 
 const HomeStack = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Search" component={Search} />
@@ -54,7 +55,7 @@ const HomeStack = () => {
 
 const FavouriteStack = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="Favouritee" component={Favourite} />
       <Stack.Screen name="User" component={User} />
       <Stack.Screen name="ProductDetail" component={ProductDetail} />
@@ -64,10 +65,18 @@ const FavouriteStack = () => {
 
 const MyCartStack = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} >
+    <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="MyCartt" component={MyCart} />
       <Stack.Screen name="User" component={User} />
       <Stack.Screen name="Checkout1" component={Checkout} />
+    </Stack.Navigator>
+  );
+};
+const MySettingStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Screen name="Settingss" component={Settings} />
+      <Stack.Screen name="History" component={History} />
     </Stack.Navigator>
   );
 };
@@ -81,14 +90,15 @@ const getTabBarVisibility = route => {
     routeName === 'Search' ||
     routeName === 'ProductDetail' ||
     routeName === 'ProductAll' ||
-    routeName === 'User'
+    routeName === 'User' ||
+    routeName === 'History'
   ) {
     return 'none';
   }
   return 'flex';
 };
 
-const CustomTabIcon = ({ name, size, color }) => {
+const CustomTabIcon = ({name, size, color}) => {
   if (name === 'cart') {
     return (
       <View style={styles.customTab}>
@@ -101,13 +111,13 @@ const CustomTabIcon = ({ name, size, color }) => {
 
 const Main = () => {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{flex: 1}}>
       <Tab.Navigator
-        screenOptions={({ route }) => ({
+        screenOptions={({route}) => ({
           headerShown: false,
           tabBarShowLabel: false,
-          tabBarStyle: [styles.tabBar, { display: getTabBarVisibility(route) }],
-          tabBarIcon: ({ focused, color, size }) => {
+          tabBarStyle: [styles.tabBar, {display: getTabBarVisibility(route)}],
+          tabBarIcon: ({focused, color, size}) => {
             let iconName;
             switch (route.name) {
               case 'Homee':
@@ -132,13 +142,15 @@ const Main = () => {
           },
           tabBarActiveTintColor: '#007bff',
           tabBarInactiveTintColor: 'gray',
-        })}
-      >
+        })}>
         <Tab.Screen name="Homee" component={HomeStack} />
         <Tab.Screen name="Favourite" component={FavouriteStack} />
         <Tab.Screen name="MyCart" component={MyCartStack} />
-        <Tab.Screen name="NotificationsScreen" component={NotificationsScreen} />
-        <Tab.Screen name="Settings" component={Settings} />
+        <Tab.Screen
+          name="NotificationsScreen"
+          component={NotificationsScreen}
+        />
+        <Tab.Screen name="Settings" component={MySettingStack} />
       </Tab.Navigator>
     </View>
   );

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -8,19 +8,50 @@ import {
   TouchableOpacity,
   Switch,
   Image,
+  LogBox,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export default function Example({navigation, route}) {
+  LogBox.ignoreLogs([
+    'Warning: Failed prop type: Invalid prop',
+  ]);
+  const [item, setItem] = useState(false);
 
-export default function Example() {
+ 
+
+  
   const [form, setForm] = useState({
     darkMode: false,
     emailNotifications: true,
     pushNotifications: false,
   });
 
+  const [userInfor, setUserInfor] = useState({});
+  async function fetchUserData(params) {
+    const storedEmail = await AsyncStorage.getItem('email');
+    const storedPhone = await AsyncStorage.getItem('mobile');
+    const storedAddress = await AsyncStorage.getItem('address');
+    const storedFirstname = await AsyncStorage.getItem('firstname');
+    const storedLastname = await AsyncStorage.getItem('lastname');
+    const usrData = {
+      email: storedEmail,
+      phone: storedPhone,
+      address: storedAddress,
+      fName: storedFirstname,
+      lName: storedLastname,
+    };
+    setUserInfor(usrData);
+  }
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+  useEffect(() => {
+    fetchUserData();
+  }, [item]);
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#f6f6f6'}}>
       <View style={styles.container}>
@@ -38,13 +69,16 @@ export default function Example() {
               style={styles.profileAvatar}
             />
 
-            {/* <Text style={styles.profileName}>John Doe</Text>
-
-            <Text style={styles.profileEmail}>john.doe@mail.com</Text> */}
+            <Text style={styles.profileName}>{userInfor.lName}</Text>
+            <Text style={styles.profileEmail}>{userInfor.email}</Text>
 
             <TouchableOpacity
               onPress={() => {
-                // handle onPress
+                navigation.navigate('EditProfileScreen', {
+                  onReturn: (item) => {
+                    setItem(item);
+                  }
+                });
               }}>
               <View style={styles.profileAction}>
                 <Text style={styles.profileActionText}>Edit Profile</Text>
@@ -137,14 +171,14 @@ export default function Example() {
               <View style={[styles.rowWrapper, styles.rowFirst]}>
                 <TouchableOpacity
                   onPress={() => {
-                    // handle onPress
+                  navigation.navigate('History')
                   }}
                   style={styles.row}>
                   <View style={[styles.rowIcon, {backgroundColor: '#fe9400'}]}>
                     <FeatherIcon color="#fff" name="globe" size={20} />
                   </View>
 
-                  <Text style={styles.rowLabel}>Payment Info</Text>
+                  <Text style={styles.rowLabel}>History</Text>
 
                   <View style={styles.rowSpacer} />
 
@@ -185,7 +219,9 @@ export default function Example() {
                       <FeatherIcon color="#fff" name="at-sign" size={20} />
                     </View>
 
-                    <Text style={styles.rowLabel}>Eneble Face ID For Log In</Text>
+                    <Text style={styles.rowLabel}>
+                      Eneble Face ID For Log In
+                    </Text>
 
                     <View style={styles.rowSpacer} />
 
@@ -205,7 +241,9 @@ export default function Example() {
                       <FeatherIcon color="#fff" name="bell" size={20} />
                     </View>
 
-                    <Text style={styles.rowLabel}>Eneble Push Notifications</Text>
+                    <Text style={styles.rowLabel}>
+                      Eneble Push Notifications
+                    </Text>
 
                     <View style={styles.rowSpacer} />
 
@@ -220,11 +258,14 @@ export default function Example() {
 
                 <View style={[styles.rowWrapper, styles.rowFirst]}>
                   <View style={styles.row}>
-                  <View style={[styles.rowIcon, {backgroundColor: '#32c759'}]}>
-                    <FeatherIcon color="#fff" name="navigation" size={20} />
-                  </View>
+                    <View
+                      style={[styles.rowIcon, {backgroundColor: '#32c759'}]}>
+                      <FeatherIcon color="#fff" name="navigation" size={20} />
+                    </View>
 
-                    <Text style={styles.rowLabel}>Eneble Location Services</Text>
+                    <Text style={styles.rowLabel}>
+                      Eneble Location Services
+                    </Text>
 
                     <View style={styles.rowSpacer} />
 
@@ -238,21 +279,22 @@ export default function Example() {
                 </View>
 
                 <View style={styles.rowWrapper}>
-                <View style={styles.row}>
-                  <View style={[styles.rowIcon, {backgroundColor: '#007AFF'}]}>
-                    <FeatherIcon color="#fff" name="moon" size={20} />
+                  <View style={styles.row}>
+                    <View
+                      style={[styles.rowIcon, {backgroundColor: '#007AFF'}]}>
+                      <FeatherIcon color="#fff" name="moon" size={20} />
+                    </View>
+
+                    <Text style={styles.rowLabel}>Dark Mode</Text>
+
+                    <View style={styles.rowSpacer} />
+
+                    <Switch
+                      onValueChange={darkMode => setForm({...form, darkMode})}
+                      value={form.darkMode}
+                    />
                   </View>
-
-                  <Text style={styles.rowLabel}>Dark Mode</Text>
-
-                  <View style={styles.rowSpacer} />
-
-                  <Switch
-                    onValueChange={darkMode => setForm({...form, darkMode})}
-                    value={form.darkMode}
-                  />
                 </View>
-              </View>
 
                 {/* <View style={styles.rowWrapper}>
                   <TouchableOpacity

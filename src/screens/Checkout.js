@@ -54,7 +54,7 @@ const Checkout = ({route, navigation}) => {
   const handleSaveAddress = async () => {
     try {
       const response = await fetch(
-        'http://192.168.0.149:3000/api/user/save-address',
+        'http://192.168.10.106:3000/api/user/save-address',
         {
           method: 'PUT',
           headers: {
@@ -100,7 +100,7 @@ const Checkout = ({route, navigation}) => {
   
     try {
       const response = await fetch(
-        'http://192.168.0.149:3000/api/payment/cash',
+        'http://192.168.10.106:3000/api/payment/cash',
         {
           method: 'POST',
           headers: {

@@ -30,7 +30,7 @@ const MyCart = ({ navigation }) => {
 
   const fetchCart = async () => {
     try {
-      const response = await fetch('http://192.168.0.149:3000/api/user/cart', {
+      const response = await fetch('http://192.168.10.106:3000/api/user/cart', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

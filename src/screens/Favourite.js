@@ -19,7 +19,7 @@ const Favourite = ({ navigation }) => {
 
   const fetchWishlist = async () => {
     try {
-      const response = await fetch('http://192.168.0.149:3000/api/user/wishlist', {
+      const response = await fetch('http://192.168.10.106:3000/api/user/wishlist', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
